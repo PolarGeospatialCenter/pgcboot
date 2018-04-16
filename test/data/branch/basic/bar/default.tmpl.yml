@@ -1,0 +1,6 @@
+---
+hostname: {{ .Node.Hostname }}
+inventory_id: {{ .Node.InventoryID }}
+mac: {{ (index .Node.Networks "provisioning").MAC }}
+kubernetes_version: {{ (index .DistroVars "kube_version") }}
+filepath: {{ .BaseURL }}/foo/test.txt

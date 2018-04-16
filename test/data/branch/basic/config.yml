@@ -1,0 +1,18 @@
+---
+endpoints:
+  static:
+    foo:
+      source: data/foo
+  template:
+    bar:
+      template_path: bar
+      default_template: default.tmpl.yml
+      content_type: application/x-yaml
+      network: "provisioning"
+      post_render:
+        - "cat"
+  proxy:
+    google:
+      targeturl: https://www.google.com/
+vars:
+  kube_version: "1.9.0"

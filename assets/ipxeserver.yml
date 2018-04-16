@@ -1,0 +1,7 @@
+---
+git:
+  url: ""
+  deploy_key: "/path/to/deploy.key"
+  webhook_secret: "b4ds3cr3t"
+consul:
+  token: ""
