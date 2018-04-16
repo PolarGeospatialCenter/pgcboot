@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/PolarGeospatialCenter/inventory/pkg/inventory"
-	"github.com/PolarGeospatialCenter/ipxeserver/pkg/distromux"
-	treebuilder "github.com/PolarGeospatialCenter/ipxeserver/pkg/gittree"
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/distromux"
+	treebuilder "github.com/PolarGeospatialCenter/pgcboot/pkg/gittree"
 	"github.com/gorilla/mux"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/spf13/viper"
@@ -49,8 +49,8 @@ func ConnectInventory(cfg *viper.Viper) error {
 func main() {
 	// setup config
 	cfg := viper.New()
-	cfg.SetConfigName("ipxeserver")
-	cfg.AddConfigPath("/etc/ipxeserver")
+	cfg.SetConfigName("distroserver")
+	cfg.AddConfigPath("/etc/distroserver")
 	cfg.AddConfigPath(".")
 	cfg.SetDefault("tempdir", "")
 	cfg.SetDefault("consul.inventory_base", inventory.DefaultConsulInventoryBase)
@@ -78,7 +78,7 @@ func main() {
 	defer os.RemoveAll(treePath)
 	log.Printf("Working tree path: %s", treePath)
 
-	server := NewIPxeServer(treePath)
+	server := NewDistroServer(treePath)
 
 	updateFunc := func(_ interface{}, _ webhooks.Header) {
 		builder, err := treebuilder.NewSSHBuilder(cfg.GetString("git.url"), cfg.GetString("git.deploy_key"), treePath, repoPath)

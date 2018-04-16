@@ -1,4 +1,4 @@
-.PHONY: test deps
+.PHONY: test deps docker
 
 test: deps
 	go test -cover ./pkg/...
@@ -8,3 +8,6 @@ vendor: Gopkg.lock Gopkg.toml
 	dep ensure -vendor-only
 
 deps: vendor
+
+docker:
+	docker build -f Dockerfile.distroserver -t polargeospatialcenter/distroserver .

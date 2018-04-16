@@ -1,6 +1,7 @@
 FROM golang:alpine
 
-WORKDIR /go/src/github.com/PolarGeospatialCenter/ipxeserver
+WORKDIR /go/src/github.com/PolarGeospatialCenter/pgcboot
+ENV BINARY distroserver
 
 RUN apk add --no-cache git make curl
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -10,7 +11,7 @@ RUN make deps
 
 COPY cmd ./cmd
 COPY pkg ./pkg
-RUN go build -o /bin/ipxeserver ./cmd/ipxeserver
+RUN go build -o /bin/$BINARY ./cmd/$BINARY
 
 
 FROM alpine:latest
@@ -21,5 +22,5 @@ ADD https://github.com/coreos/container-linux-config-transpiler/releases/downloa
 COPY assets/known_hosts $SSH_KNOWN_HOSTS
 RUN chmod a+x /usr/bin/ct
 
-COPY --from=0 /bin/ipxeserver /bin/ipxeserver
-CMD ["/bin/ipxeserver"]
+COPY --from=0 /bin/$BINARY /bin/$BINARY
+CMD ["/bin/distroserver"]

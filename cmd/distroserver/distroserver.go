@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PolarGeospatialCenter/ipxeserver/pkg/distromux"
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/distromux"
 	"github.com/gorilla/mux"
 )
 
-type IPxeServer struct {
+type DistroServer struct {
 	repoPath    string
 	handlers    map[string]http.Handler
 	handlefuncs map[string]http.HandlerFunc
@@ -22,8 +22,8 @@ type IPxeServer struct {
 	*mux.Router
 }
 
-func NewIPxeServer(repoPath string) *IPxeServer {
-	var s IPxeServer
+func NewDistroServer(repoPath string) *DistroServer {
+	var s DistroServer
 	s.repoPath = repoPath
 	s.handlers = make(map[string]http.Handler)
 	s.handlefuncs = make(map[string]http.HandlerFunc)
@@ -50,7 +50,7 @@ func getFolders(path string) ([]string, error) {
 }
 
 // getVersionFolders returns a list of branch/tag folders within the repoPath
-func (s *IPxeServer) getVersionFolders() ([]string, error) {
+func (s *DistroServer) getVersionFolders() ([]string, error) {
 	result := make([]string, 0)
 
 	targetDirs := []string{"branch", "release"}
@@ -65,7 +65,7 @@ func (s *IPxeServer) getVersionFolders() ([]string, error) {
 	return result, nil
 }
 
-func (s *IPxeServer) Rebuild() error {
+func (s *DistroServer) Rebuild() error {
 	r := mux.NewRouter()
 	// Walk repoPath, adding a DistroMux for each directory Found
 	rebuildTime := time.Now().String()
@@ -99,17 +99,17 @@ func (s *IPxeServer) Rebuild() error {
 	return nil
 }
 
-func (s *IPxeServer) Handle(path string, h http.Handler) {
+func (s *DistroServer) Handle(path string, h http.Handler) {
 	s.handlers[path] = h
 	s.Router.Handle(path, h)
 }
 
-func (s *IPxeServer) HandleFunc(path string, h http.HandlerFunc) {
+func (s *DistroServer) HandleFunc(path string, h http.HandlerFunc) {
 	s.handlefuncs[path] = h
 	s.Router.HandleFunc(path, h)
 }
 
-func (s *IPxeServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *DistroServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Distroserver got request: %v", r)
 	if !s.Match(r, &mux.RouteMatch{}) {
 		log.Printf("No match found for request: %s", r.URL.Path)

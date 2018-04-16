@@ -14,8 +14,8 @@ import (
 
 	"github.com/PolarGeospatialCenter/inventory/pkg/inventory"
 	inventorytypes "github.com/PolarGeospatialCenter/inventory/pkg/inventory/types"
-	"github.com/PolarGeospatialCenter/ipxeserver/pkg/handler/pipe"
-	"github.com/PolarGeospatialCenter/ipxeserver/pkg/handler/template"
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/pipe"
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/template"
 	"github.com/azenk/iputils"
 )
 
