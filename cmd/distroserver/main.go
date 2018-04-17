@@ -11,40 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/PolarGeospatialCenter/inventory/pkg/inventory"
-	"github.com/PolarGeospatialCenter/pgcboot/pkg/distromux"
 	treebuilder "github.com/PolarGeospatialCenter/pgcboot/pkg/gittree"
 	"github.com/gorilla/mux"
-	consul "github.com/hashicorp/consul/api"
 	"github.com/spf13/viper"
 	"gopkg.in/go-playground/webhooks.v3"
 	"gopkg.in/go-playground/webhooks.v3/github"
 )
-
-func ConnectInventory(cfg *viper.Viper) error {
-	var store inventory.InventoryStore
-	if cfg.InConfig("consul") {
-		consulCfg := consul.DefaultConfig()
-		consulCfg.Address = cfg.GetString("consul.address")
-		consulCfg.Token = cfg.GetString("consul.token")
-		consulClient, err := consul.NewClient(consulCfg)
-		if err != nil {
-			return err
-		}
-		store, err = inventory.NewConsulStore(consulClient, cfg.GetString("consul.inventory_base"))
-		if err != nil {
-			return err
-		}
-	} else {
-		var err error
-		store, err = inventory.NewSampleInventoryStore()
-		if err != nil {
-			return err
-		}
-	}
-	distromux.SetInventoryStore(store)
-	return nil
-}
 
 func main() {
 	// setup config
@@ -53,14 +25,8 @@ func main() {
 	cfg.AddConfigPath("/etc/distroserver")
 	cfg.AddConfigPath(".")
 	cfg.SetDefault("tempdir", "")
-	cfg.SetDefault("consul.inventory_base", inventory.DefaultConsulInventoryBase)
 	// load config
 	cfg.ReadInConfig()
-
-	// Connect to inventory store
-	if err := ConnectInventory(cfg); err != nil {
-		log.Fatalf("Unable to connect to inventory: %v", err)
-	}
 
 	// Create temporary path for repository
 	repoPath, err := ioutil.TempDir(cfg.GetString("tempdir"), "repository")
