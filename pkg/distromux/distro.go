@@ -6,19 +6,21 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 )
 
 // Endpoint describes an interface that configuration structs should implement.
 type Endpoint interface {
-	CreateHandler(string, string, map[string]interface{}) (http.Handler, error)
+	CreateHandler(string, string, map[string]interface{}, api.EndpointMap) (http.Handler, error)
 }
 
 // DistroConfig descibes the configuration of an instance of DistroMux
 type DistroConfig struct {
-	Endpoints  EndpointConfig         `mapstructure:"endpoints"`
-	DistroVars map[string]interface{} `mapstructure:"vars"`
+	Endpoints   EndpointConfig         `mapstructure:"endpoints"`
+	DataSources api.EndpointMap        `mapstructure:"datasources"`
+	DistroVars  map[string]interface{} `mapstructure:"vars"`
 }
 
 type EndpointConfig struct {
@@ -63,14 +65,14 @@ func (d *DistroMux) config() (*DistroConfig, error) {
 	return &config, err
 }
 
-func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, distroVars map[string]interface{}) error {
+func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, distroVars map[string]interface{}, dataSources api.EndpointMap) error {
 	route := d.Router.PathPrefix(path)
 	tmpl, err := route.GetPathTemplate()
 	if err != nil {
 		return err
 	}
 
-	h, err := endpoint.CreateHandler(d.basePath, tmpl, distroVars)
+	h, err := endpoint.CreateHandler(d.basePath, tmpl, distroVars, dataSources)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (d *DistroMux) load() error {
 	// add each endpoint found in the config to the mux
 	for p, endpoint := range config.Endpoints.Template {
 		cleanPath := path.Clean("/" + p)
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars)
+		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
 		if err != nil {
 			return err
 		}
@@ -104,7 +106,7 @@ func (d *DistroMux) load() error {
 	// add each endpoint found in the config to the mux
 	for p, endpoint := range config.Endpoints.Static {
 		cleanPath := path.Clean("/"+p) + "/"
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars)
+		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
 		if err != nil {
 			return err
 		}
@@ -112,7 +114,7 @@ func (d *DistroMux) load() error {
 
 	for p, endpoint := range config.Endpoints.Proxy {
 		cleanPath := path.Clean("/"+p) + "/"
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars)
+		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
 		if err != nil {
 			return err
 		}

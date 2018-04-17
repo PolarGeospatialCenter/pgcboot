@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"testing"
 	"text/template"
+
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
+	gock "gopkg.in/h2non/gock.v1"
 )
 
 func TestTemplateData(t *testing.T) {
@@ -83,5 +86,19 @@ func TestTemplateSelector(t *testing.T) {
 	}
 	// It's not our problem if the node requested doesn't exist, should return default template
 	testLookup(r, []string{"default.tmpl.yml", "foo.tmpl.yml", "foo-worker.tmpl.yml"}, "default.tmpl.yml")
+
+}
+
+func TestTemplateAPICall(t *testing.T) {
+	defer gock.Off() // Flush pending mocks after test execution
+
+	e := api.EndpointMap{"test": &api.Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet}}
+	gock.New("https://api.local/v1").
+		Get("/foo").
+		Reply(200).
+		JSON(map[string]string{"foo": "bar"})
+
+	renderer := &TemplateRenderer{DataSources: e}
+	_ = renderer
 
 }

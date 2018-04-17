@@ -10,6 +10,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/pipe"
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/template"
 )
@@ -27,6 +28,7 @@ type TemplateRenderer struct {
 	DefaultTemplate  string
 	FileNameTemplate string
 	DistroVars       map[string]interface{}
+	DataSources      api.EndpointMap
 }
 
 func (tr *TemplateRenderer) getBaseURL(r *http.Request) (string, error) {
@@ -142,7 +144,9 @@ func (tr *TemplateRenderer) GetData(r *http.Request) (interface{}, error) {
 }
 
 func (tr *TemplateRenderer) TemplateFuncs() template.FuncMap {
-	return template.FuncMap{}
+	return template.FuncMap{
+		"api": tr.DataSources.Call,
+	}
 }
 
 // TemplateEndpoint describes the configuration of an endpoint based on golang
@@ -156,11 +160,11 @@ type TemplateEndpoint struct {
 }
 
 // CreateHandler returns a handler for the endpoint described by this configuration
-func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, distroVars map[string]interface{}) (http.Handler, error) {
+func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, distroVars map[string]interface{}, dataSources api.EndpointMap) (http.Handler, error) {
 	var h http.Handler
 	headers := make(map[string]string)
 	headers["Content-type"] = e.ContentType
-	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DistroVars: distroVars}
+	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DistroVars: distroVars, DataSources: dataSources}
 	log.Println(tr)
 	h, err := templatehandler.NewTemplateHandler(filepath.Join(basepath, e.TemplatePath), headers, tr)
 	if err != nil {

@@ -32,7 +32,7 @@ func TestProxyHTTP(t *testing.T) {
 
 	testTarget := fmt.Sprintf("http://%s", s.Addr)
 	endpoint := &ProxyEndpoint{TargetURL: testTarget}
-	h, err := endpoint.CreateHandler("", "/local/", nil)
+	h, err := endpoint.CreateHandler("", "/local/", nil, nil)
 	if err != nil {
 		t.Fatalf("Unable to create handler: %v", err)
 	}

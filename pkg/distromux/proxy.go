@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 )
 
 // ProxyEndpoint acts as a reverse proxy to the given TargetURL
@@ -12,7 +14,7 @@ type ProxyEndpoint struct {
 }
 
 // CreateHandler returns a httputil.ReverseProxy handler
-func (e *ProxyEndpoint) CreateHandler(_ string, pathPrefix string, _ map[string]interface{}) (http.Handler, error) {
+func (e *ProxyEndpoint) CreateHandler(_ string, pathPrefix string, _ map[string]interface{}, _ api.EndpointMap) (http.Handler, error) {
 	u, err := url.Parse(e.TargetURL)
 	if err != nil {
 		return nil, err

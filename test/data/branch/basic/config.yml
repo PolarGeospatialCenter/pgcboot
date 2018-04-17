@@ -14,5 +14,9 @@ endpoints:
   proxy:
     google:
       targeturl: https://www.google.com/
+datasources:
+  sample:
+    endpoint: http://localhost:54321/v1/sample
+    auth: sample_auth
 vars:
   kube_version: "1.9.0"

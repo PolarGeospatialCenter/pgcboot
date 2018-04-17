@@ -14,6 +14,12 @@
   version = "v1.4.7"
 
 [[projects]]
+  name = "github.com/go-test/deep"
+  packages = ["."]
+  revision = "6592d9cc0a499ad2d5f574fde80a2b5c5cc3b4f5"
+  version = "v1.0.1"
+
+[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
@@ -152,6 +158,12 @@
   version = "v3.10.0"
 
 [[projects]]
+  name = "gopkg.in/h2non/gock.v1"
+  packages = ["."]
+  revision = "550b7ca3aa563b9974e2391274ea55a940d05ca9"
+  version = "v1.0.8"
+
+[[projects]]
   name = "gopkg.in/src-d/go-billy.v4"
   packages = [".","helper/chroot","helper/polyfill","osfs","util"]
   revision = "df053870ae7070b0350624ba5a22161ba3796cc0"
@@ -178,6 +190,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b7c5a2465a51a6fd953be532063d770216e80a6ad33d64066eabad086ca3e693"
+  inputs-digest = "96a5bff6fb19d5777fbdefd932e79922fdbea2283966a913a9c48c22cf36bffd"
   solver-name = "gps-cdcl"
   solver-version = 1
