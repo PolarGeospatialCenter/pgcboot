@@ -6,6 +6,40 @@ import (
 	"text/template"
 )
 
+func TestTemplateData(t *testing.T) {
+	r, err := http.NewRequest("GET", "http://localhost:8080/branch/master/foo?role=worker", nil)
+	if err != nil {
+		t.Fatalf("Unable to create request: %v", err)
+	}
+
+	testVars := make(map[string]interface{})
+	testVars["kube_version"] = "1.9.0"
+
+	renderer := &TemplateRenderer{DistroVars: testVars}
+
+	rawData, err := renderer.GetData(r)
+	data, ok := rawData.(*TemplateData)
+	if !ok {
+		t.Errorf("got unexpected data type from renderer: %T", data)
+	}
+
+	if data.DistroVars == nil || data.DistroVars["kube_version"] != "1.9.0" {
+		t.Errorf("got bad value for distrovars: %v", data.DistroVars)
+	}
+
+	if data.RequestParams == nil || data.RequestParams["role"] != "worker" {
+		t.Errorf("got bad request parameter values %v", data.RequestParams)
+	}
+
+	if data.BaseURL != "http://localhost:8080/branch/master" {
+		t.Errorf("got bad base url: %v", data.BaseURL)
+	}
+
+	if data.RawQuery != "role=worker" {
+		t.Errorf("got bad raw query value: %v", data.RawQuery)
+	}
+}
+
 func TestTemplateSelector(t *testing.T) {
 	r, err := http.NewRequest("GET", "http://localhost:8080/branch/master/foo?role=worker", nil)
 	if err != nil {
