@@ -1,44 +1,32 @@
 package distromux
 
 import (
-	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
+	gock "gopkg.in/h2non/gock.v1"
 )
 
 func TestProxyHTTP(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(wr http.ResponseWriter, r *http.Request) {
-		wr.WriteHeader(http.StatusOK)
-		wr.Write([]byte("Test Text."))
-	})
-	s := &http.Server{
-		Addr:         "127.0.0.1:43210",
-		Handler:      mux,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-	}
+	defer gock.Off() // Flush pending mocks after test execution
 
-	go s.ListenAndServe()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	defer s.Shutdown(ctx)
+	gock.New("https://api.local/v1").
+		Get("/foo").
+		Reply(200).
+		JSON(map[string]string{"foo": "bar"})
 
-	testTarget := fmt.Sprintf("http://%s", s.Addr)
-	endpoint := &ProxyEndpoint{TargetURL: testTarget}
+	testTarget := "https://api.local/v1/foo"
+	endpoint := &ProxyEndpoint{TargetURL: "https://api.local/v1/"}
 	h, err := endpoint.CreateHandler("", "/local/", nil, nil)
 	if err != nil {
 		t.Fatalf("Unable to create handler: %v", err)
 	}
 
 	response := httptest.NewRecorder()
-	request, err := http.NewRequest("GET", "/local/", nil)
+	request, err := http.NewRequest("GET", "/local/foo", nil)
 	if err != nil {
 		t.Fatalf("Unable to create request: %v", err)
 	}
@@ -48,6 +36,11 @@ func TestProxyHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to read body: %v", err)
 	}
+
+	gock.New("https://api.local/v1").
+		Get("/foo").
+		Reply(200).
+		JSON(map[string]string{"foo": "bar"})
 
 	directRequest, err := http.NewRequest("GET", testTarget, nil)
 	if err != nil {
