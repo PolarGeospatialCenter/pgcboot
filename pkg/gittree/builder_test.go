@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-var testRepoPath = "../../test/repo"
-
 func TestLocalBuilder(t *testing.T) {
 	repoDir, err := ioutil.TempDir("", "example")
 	if err != nil {
@@ -23,6 +21,9 @@ func TestLocalBuilder(t *testing.T) {
 	}
 	defer os.RemoveAll(workDir) // clean up
 
+	cwd, _ := os.Getwd()
+	testRepoPath := path.Join(cwd, "..", "..", "test", "repo")
+	t.Logf("Creating new local git tree builder from repo: %s", path.Clean(testRepoPath))
 	b, err := NewLocalBuilder(workDir, repoDir, path.Clean(testRepoPath))
 	if err != nil {
 		t.Fatalf("Error creating local builder: %v", err)
