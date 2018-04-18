@@ -1,6 +1,7 @@
 package distromux
 
 import (
+	"bytes"
 	"net/http"
 	"testing"
 	"text/template"
@@ -99,6 +100,19 @@ func TestTemplateAPICall(t *testing.T) {
 		JSON(map[string]string{"foo": "bar"})
 
 	renderer := &TemplateRenderer{DataSources: e}
-	_ = renderer
+	tmpl, err := template.New("testTemplate").Funcs(renderer.TemplateFuncs()).Parse(`{{ $test := api "test" "" "" }}{{ $test.foo }}`)
+	if err != nil {
+		t.Errorf("unable to create template for testing: %v", err)
+	}
+
+	output := bytes.NewBufferString("")
+	err = tmpl.Execute(output, nil)
+	if err != nil {
+		t.Errorf("unable tor render template: %v", err)
+	}
+
+	if output.String() != "bar" {
+		t.Errorf("unexpected result: expected 'bar' got '%s'", output.String())
+	}
 
 }
