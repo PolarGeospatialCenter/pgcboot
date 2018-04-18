@@ -3,7 +3,9 @@ package api
 import (
 	"bytes"
 	"net/http"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/spf13/viper"
@@ -123,5 +125,37 @@ func TestAPIMapCall(t *testing.T) {
 
 	if fooval.(string) != "bar" {
 		t.Errorf("wrong value returned for foo: %v", fooval)
+	}
+}
+
+func TestIAMAuth(t *testing.T) {
+	e := EndpointMap{"test": &Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet, Auth: "iam"}}
+	request, err := http.NewRequest(http.MethodGet, "https://api.local/v1/foo", bytes.NewBufferString(""))
+	if err != nil {
+		t.Errorf("unable to create request: %v", err)
+	}
+
+	if request.Header.Get("Authorization") != "" {
+		t.Errorf("authorization header set before adding auth!")
+	}
+
+	os.Setenv("AWS_ACCESS_KEY_ID", "asdf")
+	os.Setenv("AWS_SECRET_KEY", "asdf")
+
+	err = e["test"].iamAuth(request, "", "", time.Unix(123456789, 0))
+	if err != nil {
+		t.Errorf("unable to sign request: %v", err)
+	}
+
+	if request.Header.Get("X-Amz-Date") != "19731129T213309Z" {
+		t.Errorf("amazon date header doesn't match expected value: expected '19731129T213309Z'; got '%s'", request.Header.Get("X-Amz-Date"))
+	}
+
+	authz := request.Header.Get("Authorization")
+	expectedAuthz := "AWS4-HMAC-SHA256 Credential=asdf/19731129///aws4_request, SignedHeaders=host;x-amz-date, Signature=b28ef5c7cbe25ff37da1b80d8684186b0639021078d1f8042d9310a0ccd1b17e"
+	if authz != expectedAuthz {
+		t.Error("authorization header doesn't match expected value:")
+		t.Errorf("got      %s", authz)
+		t.Errorf("expected %s", expectedAuthz)
 	}
 }

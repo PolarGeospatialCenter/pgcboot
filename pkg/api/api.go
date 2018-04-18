@@ -7,12 +7,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	iamsign "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
 // Endpoint is a single API endpoint/resource
 type Endpoint struct {
 	URL    string `mapstructure:"url"`
 	Method string `mapstructure:"method"`
+	Auth   string `mapstructure:"auth"`
 }
 
 // Call the Endpoint with the provided query string and requestBody (if applicable)
@@ -27,8 +32,7 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	c := http.Client{}
-	response, err := c.Do(req)
+	response, err := e.makeRequest(req)
 	if err != nil {
 		return nil, fmt.Errorf("unable to make http request: %v", err)
 	}
@@ -41,6 +45,35 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 
 	err = json.Unmarshal(rawBodyData, &value)
 	return value, err
+}
+
+func (e *Endpoint) iamAuth(r *http.Request, service, region string, signTime time.Time) error {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	body := bytes.NewReader(bodyBytes)
+	signer := iamsign.NewSigner(credentials.NewEnvCredentials())
+	_, err = signer.Sign(r, body, service, region, signTime)
+	return err
+}
+
+func (e *Endpoint) addAuth(r *http.Request) error {
+	switch e.Auth {
+	case "iam":
+		return e.iamAuth(r, "", "", time.Now())
+	default:
+		return nil
+	}
+}
+
+func (e *Endpoint) makeRequest(r *http.Request) (*http.Response, error) {
+	c := http.Client{}
+	err := e.addAuth(r)
+	if err != nil {
+		return nil, fmt.Errorf("error modifying request to add authentication: %v", err)
+	}
+	return c.Do(r)
 }
 
 // EndpointMap maps keys to api endpoints
