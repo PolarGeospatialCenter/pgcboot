@@ -129,20 +129,16 @@ func TestAPIMapCall(t *testing.T) {
 }
 
 func TestIAMAuth(t *testing.T) {
-	e := EndpointMap{"test": &Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet, Auth: "iam"}}
+	e := &Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet, Auth: "iam"}
 	request, err := http.NewRequest(http.MethodGet, "https://api.local/v1/foo", bytes.NewBufferString(""))
 	if err != nil {
 		t.Errorf("unable to create request: %v", err)
 	}
 
-	if request.Header.Get("Authorization") != "" {
-		t.Errorf("authorization header set before adding auth!")
-	}
-
 	os.Setenv("AWS_ACCESS_KEY_ID", "asdf")
 	os.Setenv("AWS_SECRET_KEY", "asdf")
 
-	err = e["test"].iamAuth(request, "", "", time.Unix(123456789, 0))
+	err = e.iamAuth(request, "", "", time.Unix(123456789, 0))
 	if err != nil {
 		t.Errorf("unable to sign request: %v", err)
 	}
