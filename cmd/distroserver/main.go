@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,11 +13,23 @@ import (
 	"time"
 
 	treebuilder "github.com/PolarGeospatialCenter/pgcboot/pkg/gittree"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"gopkg.in/go-playground/webhooks.v3"
 	"gopkg.in/go-playground/webhooks.v3/github"
 )
+
+func GetParameter(path string) string {
+	s := ssm.New(session.New())
+	out, err := s.GetParameter(&ssm.GetParameterInput{Name: aws.String(fmt.Sprintf("/distroserver/%s", path)), WithDecryption: aws.Bool(true)})
+	if err != nil {
+		return ""
+	}
+	return out.String()
+}
 
 func main() {
 	// setup config
@@ -47,7 +60,7 @@ func main() {
 	server := NewDistroServer(treePath)
 
 	updateFunc := func(_ interface{}, _ webhooks.Header) {
-		builder, err := treebuilder.NewSSHBuilder(cfg.GetString("git.url"), cfg.GetString("git.deploy_key"), treePath, repoPath)
+		builder, err := treebuilder.NewSSHBuilder(GetParameter("gitrepourl"), GetParameter("deploykey"), treePath, repoPath)
 		if err != nil {
 			log.Fatalf("Unable to create git tree builder: %v", err)
 		}
@@ -63,7 +76,7 @@ func main() {
 		}
 	}
 
-	hook := github.New(&github.Config{Secret: viper.GetString("git.webhook_secret")})
+	hook := github.New(&github.Config{Secret: GetParameter("webhook_secret")})
 	hook.RegisterEvents(updateFunc, github.ReleaseEvent, github.PushEvent)
 	server.Handle("/updatehook", webhooks.Handler(hook))
 
