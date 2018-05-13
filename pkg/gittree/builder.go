@@ -75,7 +75,7 @@ func NewSSHBuilder(remote, deployKey, treePath, repoPath string) (*Builder, erro
 
 // SetSSHKey opens the supplied ssh key and configures the builder to use it for cloning and fetching.
 func (b *Builder) SetSSHKey(deployKeyPath string) error {
-	auth, err := ssh.NewPublicKeysFromFile("git", deployKeyPath, "")
+	auth, err := ssh.NewPublicKeys("git", []byte(deployKeyPath), "")
 	if err != nil {
 		return err
 	}
