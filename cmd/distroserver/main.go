@@ -26,9 +26,10 @@ func GetParameter(path string) string {
 	s := ssm.New(session.New())
 	out, err := s.GetParameter(&ssm.GetParameterInput{Name: aws.String(fmt.Sprintf("/distroserver/%s", path)), WithDecryption: aws.Bool(true)})
 	if err != nil {
+		log.Printf("Error getting parameter %s: %v", path, err)
 		return ""
 	}
-	return out.String()
+	return out.GoString()
 }
 
 func main() {
@@ -60,7 +61,11 @@ func main() {
 	server := NewDistroServer(treePath)
 
 	updateFunc := func(_ interface{}, _ webhooks.Header) {
-		builder, err := treebuilder.NewSSHBuilder(GetParameter("gitrepourl"), GetParameter("deploykey"), treePath, repoPath)
+		deployKey := GetParameter("deploykey")
+		if deployKey == "" {
+			log.Fatalf("Got empty deploy key, error retrieving?")
+		}
+		builder, err := treebuilder.NewSSHBuilder(GetParameter("gitrepourl"), deployKey, treePath, repoPath)
 		if err != nil {
 			log.Fatalf("Unable to create git tree builder: %v", err)
 		}
