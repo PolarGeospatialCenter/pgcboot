@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -34,7 +35,14 @@ func (e *Endpoint) Call(query, requestBody string) (*APIResponse, error) {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
 	u.RawQuery = query
-	req, err := http.NewRequest(e.Method, u.String(), bytes.NewBufferString(requestBody))
+	var body io.Reader
+	switch e.Method {
+	case http.MethodGet:
+		body = nil
+	default:
+		body = bytes.NewBufferString(requestBody)
+	}
+	req, err := http.NewRequest(e.Method, u.String(), body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
