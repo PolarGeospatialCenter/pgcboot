@@ -45,6 +45,9 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 	}
 
 	err = json.Unmarshal(rawBodyData, &value)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response body: %v -- raw body '%s'", err, string(rawBodyData))
+	}
 	return value, err
 }
 
