@@ -54,7 +54,7 @@ func (e *Endpoint) Call(query, requestBody string) (*APIResponse, error) {
 	err = json.Unmarshal(rawBodyData, &(apiResponse.Data))
 	if err != nil {
 		apiResponse.Data["error"] = "unable to unmarshal response body"
-		return apiResponse, fmt.Errorf("unable to unmarshal response body: %v -- request '%s' -- raw body '%s'", err, req.RequestURI, string(rawBodyData))
+		return apiResponse, fmt.Errorf("unable to unmarshal response body: %v -- request '%s' -- raw body '%s'", err, u.String(), string(rawBodyData))
 	}
 	return apiResponse, err
 }
