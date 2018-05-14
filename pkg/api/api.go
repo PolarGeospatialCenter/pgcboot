@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	iamsign "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
@@ -53,7 +54,7 @@ func (e *Endpoint) iamAuth(r *http.Request, service, region string, signTime tim
 		return err
 	}
 	body := bytes.NewReader(bodyBytes)
-	signer := iamsign.NewSigner(credentials.NewEnvCredentials())
+	signer := iamsign.NewSigner(credentials.NewChainCredentials([]credentials.Provider{&credentials.EnvProvider{}, &ec2rolecreds.EC2RoleProvider{}}))
 	_, err = signer.Sign(r, body, service, region, signTime)
 	return err
 }
