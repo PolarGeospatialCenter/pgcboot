@@ -130,7 +130,7 @@ func TestAPIMapCall(t *testing.T) {
 
 func TestIAMAuth(t *testing.T) {
 	e := &Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet, Auth: "iam"}
-	request, err := http.NewRequest(http.MethodGet, "https://api.local/v1/foo", bytes.NewBufferString(""))
+	request, err := http.NewRequest(http.MethodGet, "https://api.local/v1/foo", nil)
 	if err != nil {
 		t.Errorf("unable to create request: %v", err)
 	}

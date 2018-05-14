@@ -68,7 +68,7 @@ func (e *Endpoint) Call(query, requestBody string) (*APIResponse, error) {
 }
 
 func (e *Endpoint) iamCredentials() *session.Session {
-	if e.iamSession == nil {
+	if e.iamSession == nil || e.iamSession.Config.Credentials.IsExpired() {
 		e.iamSession = session.New()
 	}
 
@@ -76,17 +76,22 @@ func (e *Endpoint) iamCredentials() *session.Session {
 }
 
 func (e *Endpoint) iamAuth(r *http.Request, signTime time.Time) error {
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
+	var body io.ReadSeeker
+	if r.Body != nil {
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewReader(bodyBytes)
+	} else {
+		body = bytes.NewReader([]byte{})
 	}
-	body := bytes.NewReader(bodyBytes)
 
 	sess := e.iamCredentials()
 	region := *sess.Config.Region
 	service := "execute-api"
 	signer := iamsign.NewSigner(sess.Config.Credentials)
-	_, err = signer.Sign(r, body, service, region, signTime)
+	_, err := signer.Sign(r, body, service, region, signTime)
 	return err
 }
 
