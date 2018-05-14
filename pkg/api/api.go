@@ -15,9 +15,10 @@ import (
 
 // Endpoint is a single API endpoint/resource
 type Endpoint struct {
-	URL    string `mapstructure:"url"`
-	Method string `mapstructure:"method"`
-	Auth   string `mapstructure:"auth"`
+	URL        string `mapstructure:"url"`
+	Method     string `mapstructure:"method"`
+	Auth       string `mapstructure:"auth"`
+	iamSession *session.Session
 }
 
 // Call the Endpoint with the provided query string and requestBody (if applicable)
@@ -47,13 +48,22 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 	return value, err
 }
 
+func (e *Endpoint) iamCredentials() *session.Session {
+	if e.iamSession == nil {
+		e.iamSession = session.New()
+	}
+
+	return e.iamSession
+}
+
 func (e *Endpoint) iamAuth(r *http.Request, signTime time.Time) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 	body := bytes.NewReader(bodyBytes)
-	sess := session.New()
+
+	sess := e.iamCredentials()
 	region := *sess.Config.Region
 	service := "execute-api"
 	signer := iamsign.NewSigner(sess.Config.Credentials)
