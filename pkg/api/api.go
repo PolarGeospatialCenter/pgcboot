@@ -47,13 +47,15 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 	return value, err
 }
 
-func (e *Endpoint) iamAuth(r *http.Request, service, region string, signTime time.Time) error {
+func (e *Endpoint) iamAuth(r *http.Request, signTime time.Time) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 	body := bytes.NewReader(bodyBytes)
 	sess := session.New()
+	region := *sess.Config.Region
+	service := "execute-api"
 	signer := iamsign.NewSigner(sess.Config.Credentials)
 	_, err = signer.Sign(r, body, service, region, signTime)
 	return err
@@ -62,7 +64,7 @@ func (e *Endpoint) iamAuth(r *http.Request, service, region string, signTime tim
 func (e *Endpoint) addAuth(r *http.Request) error {
 	switch e.Auth {
 	case "iam":
-		return e.iamAuth(r, "", "", time.Now())
+		return e.iamAuth(r, time.Now())
 	default:
 		return nil
 	}

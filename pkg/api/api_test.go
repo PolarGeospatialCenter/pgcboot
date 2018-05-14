@@ -137,8 +137,9 @@ func TestIAMAuth(t *testing.T) {
 
 	os.Setenv("AWS_ACCESS_KEY_ID", "asdf")
 	os.Setenv("AWS_SECRET_KEY", "asdf")
+	os.Setenv("AWS_REGION", "us-east-2")
 
-	err = e.iamAuth(request, "", "", time.Unix(123456789, 0))
+	err = e.iamAuth(request, time.Unix(123456789, 0))
 	if err != nil {
 		t.Errorf("unable to sign request: %v", err)
 	}
@@ -148,7 +149,7 @@ func TestIAMAuth(t *testing.T) {
 	}
 
 	authz := request.Header.Get("Authorization")
-	expectedAuthz := "AWS4-HMAC-SHA256 Credential=asdf/19731129///aws4_request, SignedHeaders=host;x-amz-date, Signature=b28ef5c7cbe25ff37da1b80d8684186b0639021078d1f8042d9310a0ccd1b17e"
+	expectedAuthz := "AWS4-HMAC-SHA256 Credential=asdf/19731129/us-east-2/execute-api/aws4_request, SignedHeaders=host;x-amz-date, Signature=f8261422af8f09f27f24c0c27b9060fa3e0fc9d8a09c75d68189b542fe617385"
 	if authz != expectedAuthz {
 		t.Error("authorization header doesn't match expected value:")
 		t.Errorf("got      %s", authz)
