@@ -100,7 +100,7 @@ func TestTemplateAPICall(t *testing.T) {
 		JSON(map[string]string{"foo": "bar"})
 
 	renderer := &TemplateRenderer{DataSources: e}
-	tmpl, err := template.New("testTemplate").Funcs(renderer.TemplateFuncs()).Parse(`{{ $test := api "test" "" "" }}{{ $test.foo }}`)
+	tmpl, err := template.New("testTemplate").Funcs(renderer.TemplateFuncs()).Parse(`{{ $test := api "test" "" "" }}{{ $test.Data.foo }}`)
 	if err != nil {
 		t.Errorf("unable to create template for testing: %v", err)
 	}
