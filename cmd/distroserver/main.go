@@ -65,7 +65,11 @@ func main() {
 		if deployKey == "" {
 			log.Fatalf("Got empty deploy key, error retrieving?")
 		}
-		builder, err := treebuilder.NewSSHBuilder(GetParameter("gitrepourl"), deployKey, treePath, repoPath)
+
+		repoUrl := GetParameter("gitrepourl")
+		log.Printf("Using RepoURL: %s", repoUrl)
+
+		builder, err := treebuilder.NewSSHBuilder(repoUrl, deployKey, treePath, repoPath)
 		if err != nil {
 			log.Fatalf("Unable to create git tree builder: %v", err)
 		}
