@@ -29,7 +29,7 @@ func GetParameter(path string) string {
 		log.Printf("Error getting parameter %s: %v", path, err)
 		return ""
 	}
-	return out.GoString()
+	return *out.Parameter.Value
 }
 
 func main() {
