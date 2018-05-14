@@ -13,6 +13,12 @@ import (
 	iamsign "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
+// APIResponse is a data structure encapsulating the return from an api endpoint
+type APIResponse struct {
+	Status int
+	Data   map[string]interface{}
+}
+
 // Endpoint is a single API endpoint/resource
 type Endpoint struct {
 	URL        string `mapstructure:"url"`
@@ -22,7 +28,7 @@ type Endpoint struct {
 }
 
 // Call the Endpoint with the provided query string and requestBody (if applicable)
-func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, error) {
+func (e *Endpoint) Call(query, requestBody string) (*APIResponse, error) {
 	u, err := url.Parse(e.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
@@ -38,17 +44,19 @@ func (e *Endpoint) Call(query, requestBody string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("unable to make http request: %v", err)
 	}
 
-	value := make(map[string]interface{})
+	apiResponse := &APIResponse{Status: response.StatusCode, Data: make(map[string]interface{})}
 	rawBodyData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read response body: %v", err)
+		apiResponse.Data["error"] = "unable to read api response body"
+		return apiResponse, fmt.Errorf("unable to read response body: %v", err)
 	}
 
-	err = json.Unmarshal(rawBodyData, &value)
+	err = json.Unmarshal(rawBodyData, &(apiResponse.Data))
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response body: %v -- raw body '%s'", err, string(rawBodyData))
+		apiResponse.Data["error"] = "unable to unmarshal response body"
+		return apiResponse, fmt.Errorf("unable to unmarshal response body: %v -- request '%s' -- raw body '%s'", err, req.RequestURI, string(rawBodyData))
 	}
-	return value, err
+	return apiResponse, err
 }
 
 func (e *Endpoint) iamCredentials() *session.Session {
@@ -96,7 +104,7 @@ func (e *Endpoint) makeRequest(r *http.Request) (*http.Response, error) {
 type EndpointMap map[string]*Endpoint
 
 // Call the endpoint from the map with the provided arguments
-func (m EndpointMap) Call(endpoint, query, requestBody string) (map[string]interface{}, error) {
+func (m EndpointMap) Call(endpoint, query, requestBody string) (*APIResponse, error) {
 	e, ok := m[endpoint]
 	if !ok {
 		return nil, fmt.Errorf("endpoint not found: %s", endpoint)
