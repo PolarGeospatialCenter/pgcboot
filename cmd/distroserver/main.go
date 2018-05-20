@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,29 +11,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/PolarGeospatialCenter/awstools/pkg/config"
 	treebuilder "github.com/PolarGeospatialCenter/pgcboot/pkg/gittree"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 	"gopkg.in/go-playground/webhooks.v3"
 	"gopkg.in/go-playground/webhooks.v3/github"
 )
 
-func GetParameter(path string) string {
-	s := ssm.New(session.New())
-	out, err := s.GetParameter(&ssm.GetParameterInput{Name: aws.String(fmt.Sprintf("/distroserver/%s", path)), WithDecryption: aws.Bool(true)})
-	if err != nil {
-		log.Printf("Error getting parameter %s: %v", path, err)
-		return ""
-	}
-	return *out.Parameter.Value
-}
-
 func main() {
 	// setup config
-	cfg := viper.New()
+	cfg := config.NewParameterViper()
 	cfg.SetConfigName("distroserver")
 	cfg.AddConfigPath("/etc/distroserver")
 	cfg.AddConfigPath(".")
@@ -61,12 +47,12 @@ func main() {
 	server := NewDistroServer(treePath)
 
 	updateFunc := func(_ interface{}, _ webhooks.Header) {
-		deployKey := GetParameter("deploykey")
+		deployKey := cfg.GetString("git.deploykey")
 		if deployKey == "" {
 			log.Fatalf("Got empty deploy key, error retrieving?")
 		}
 
-		repoUrl := GetParameter("gitrepourl")
+		repoUrl := cfg.GetString("git.repourl")
 		log.Printf("Using RepoURL: %s", repoUrl)
 
 		builder, err := treebuilder.NewSSHBuilder(repoUrl, deployKey, treePath, repoPath)
@@ -85,7 +71,7 @@ func main() {
 		}
 	}
 
-	hook := github.New(&github.Config{Secret: GetParameter("webhook_secret")})
+	hook := github.New(&github.Config{Secret: cfg.GetString("git.webhook_secret")})
 	hook.RegisterEvents(updateFunc, github.ReleaseEvent, github.PushEvent)
 	server.Handle("/updatehook", webhooks.Handler(hook))
 
