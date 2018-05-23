@@ -95,5 +95,8 @@ func TestMockAPICall(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to read response body: %v", err)
 	}
-	_ = resultBody
+
+	if string(resultBody) != "{\"InventoryID\": \"pgc-0030\"}\n" {
+		t.Errorf("Wrong result returned from mock.")
+	}
 }
