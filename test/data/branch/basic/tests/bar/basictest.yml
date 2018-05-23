@@ -1,0 +1,22 @@
+---
+request:
+  path: /bar
+  query: id=pgc-0031
+  method: GET
+mocked_data:
+  - datasource: node
+    request:
+      query: "id=pgc-0030"
+      body: ""
+    response:
+      status: 200
+      body: |
+        {"InventoryID": "pgc-0030","Hostname": "testhostname"}
+expected:
+  status: 200
+  body: |
+    ---
+    hostname: testhostname
+    inventory_id: pgc-0030
+    kubernetes_version: 1.9.0
+    filepath: http://local/foo/test.txt

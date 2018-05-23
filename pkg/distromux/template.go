@@ -35,7 +35,7 @@ func (tr *TemplateRenderer) getBaseURL(r *http.Request) (string, error) {
 	relpath := ""
 	if r.URL.Path[0] == '/' {
 		pathels := strings.Split(r.URL.Path[1:], "/")
-		relpath = strings.Join(pathels[0:2], "/")
+		relpath = strings.Join(pathels[0:len(pathels)-1], "/")
 	}
 
 	scheme := "http"
@@ -45,7 +45,11 @@ func (tr *TemplateRenderer) getBaseURL(r *http.Request) (string, error) {
 
 	host := r.Host
 
-	u, err := url.Parse(fmt.Sprintf("%s://%s/%s", scheme, host, relpath))
+	if relpath != "" {
+		u, err := url.Parse(fmt.Sprintf("%s://%s/%s", scheme, host, relpath))
+		return u.String(), err
+	}
+	u, err := url.Parse(fmt.Sprintf("%s://%s", scheme, host))
 	return u.String(), err
 }
 

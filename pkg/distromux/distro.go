@@ -1,6 +1,7 @@
 package distromux
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"path"
@@ -20,6 +21,7 @@ type Endpoint interface {
 type DistroConfig struct {
 	Endpoints   EndpointConfig         `mapstructure:"endpoints"`
 	DataSources api.EndpointMap        `mapstructure:"datasources"`
+	Test        DistroTestSuite        `mapstructure:"test"`
 	DistroVars  map[string]interface{} `mapstructure:"vars"`
 }
 
@@ -35,6 +37,7 @@ type EndpointConfig struct {
 type DistroMux struct {
 	*mux.Router
 	basePath string
+	cfg      *DistroConfig
 }
 
 // NewDistroMux returns a new DistroMux that serves the configuration found at the supplied path
@@ -42,7 +45,13 @@ func NewDistroMux(srcpath string, router *mux.Router) *DistroMux {
 	var d DistroMux
 	d.basePath = srcpath
 	d.Router = router
-	err := d.load()
+	cfg, err := d.config()
+	if err != nil {
+		log.Printf("Failed to parse distro configuration: %v", err)
+		return nil
+	}
+	d.cfg = cfg
+	err = d.load()
 	if err != nil {
 		log.Printf("An error ocurred while loading mux: %s", err)
 	}
@@ -84,12 +93,9 @@ func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, distroVars map[s
 
 // load populates the router object by walking through the config.
 func (d *DistroMux) load() error {
+	var err error
 	// read configuration from config directory
-	config, err := d.config()
-	if err != nil {
-		return err
-	}
-	log.Printf("Read config %s", config)
+	config := d.cfg
 	d.Router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("active"))
 	})
@@ -121,4 +127,25 @@ func (d *DistroMux) load() error {
 	}
 
 	return nil
+}
+
+func (d *DistroMux) Test() (map[string]*DistroTestResult, error) {
+	testConfig := d.cfg.Test
+	testsFolder := testConfig.Folder
+	if testsFolder == "" {
+		testsFolder = "tests"
+	}
+
+	// Load test cases from folder
+	testCases, err := LoadTestCases(path.Join(d.basePath, testsFolder))
+	if err != nil {
+		return nil, fmt.Errorf("failed loading test cases from file: %v", err)
+	}
+
+	testResults := make(map[string]*DistroTestResult)
+	for p, c := range testCases {
+		testResults[p] = c.Test(d, d.cfg.DataSources)
+	}
+
+	return testResults, nil
 }

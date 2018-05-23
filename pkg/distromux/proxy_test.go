@@ -11,7 +11,9 @@ import (
 )
 
 func TestProxyHTTP(t *testing.T) {
-	defer gock.Off() // Flush pending mocks after test execution
+	gock.DisableNetworking()
+	defer gock.EnableNetworking()
+	defer gock.Off()
 
 	gock.New("https://api.local/v1").
 		Get("/foo").

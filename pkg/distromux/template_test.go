@@ -91,6 +91,8 @@ func TestTemplateSelector(t *testing.T) {
 }
 
 func TestTemplateAPICall(t *testing.T) {
+	gock.DisableNetworking()
+	defer gock.EnableNetworking()
 	defer gock.Off() // Flush pending mocks after test execution
 
 	e := api.EndpointMap{"test": &api.Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet}}
