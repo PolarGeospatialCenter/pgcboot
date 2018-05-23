@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/spf13/viper"
@@ -121,7 +122,7 @@ func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *Distro
 	if err != nil {
 		return &DistroTestResult{Failed: true, Output: fmt.Sprintf("unable to read result body: %v", err)}
 	}
-	matchingBody = (string(resultBody) == c.ExpectedOutput.Body)
+	matchingBody = (strings.TrimSpace(string(resultBody)) == strings.TrimSpace(c.ExpectedOutput.Body))
 	result.Failed = (response.Result().StatusCode != c.ExpectedOutput.Status) || !matchingBody
 	if !matchingBody {
 		result.Output = fmt.Sprintf("Expected: status: %d\n%s\n", c.ExpectedOutput.Status, c.ExpectedOutput.Body) +
