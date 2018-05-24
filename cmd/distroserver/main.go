@@ -67,7 +67,7 @@ func main() {
 
 		err = server.Rebuild()
 		if err != nil {
-			log.Fatalf("Unable to rebuild ipxeserver: %v", err)
+			log.Printf("Unable to rebuild: %v", err)
 		}
 	}
 

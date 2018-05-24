@@ -16,7 +16,10 @@ func main() {
 		localDistro, _ = os.Getwd()
 	}
 	r := mux.NewRouter()
-	distro := distromux.NewDistroMux(localDistro, r)
+	distro, err := distromux.NewDistroMux(localDistro, r)
+	if err != nil {
+		log.Fatalf("Unable to load/parse distro: %v", err)
+	}
 
 	testResults, err := distro.Test()
 	if err != nil {

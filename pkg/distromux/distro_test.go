@@ -9,7 +9,10 @@ import (
 
 func TestDistroMux(t *testing.T) {
 	r := mux.NewRouter()
-	m := NewDistroMux("../../test/data/branch/basic", r)
+	m, err := NewDistroMux("../../test/data/branch/basic", r)
+	if err != nil {
+		t.Errorf("Error creating distromux: %v", err)
+	}
 
 	// generate list of routes
 	routes := make(map[string]*mux.Route)
@@ -41,7 +44,10 @@ func TestDistroMux(t *testing.T) {
 
 func TestDistroMuxTest(t *testing.T) {
 	r := mux.NewRouter()
-	m := NewDistroMux("../../test/data/branch/basic", r)
+	m, err := NewDistroMux("../../test/data/branch/basic", r)
+	if err != nil {
+		t.Errorf("Error creating distromux: %v", err)
+	}
 
 	results, err := m.Test()
 	if err != nil {

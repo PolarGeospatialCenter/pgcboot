@@ -3,7 +3,6 @@ package distromux
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -88,9 +87,7 @@ func (tr *TemplateRenderer) getTemplateData(r *http.Request) (*TemplateData, err
 
 func templateNames(t *template.Template) map[string]string {
 	templateList := make(map[string]string)
-	log.Printf("Loading template names for: %v", t)
 	for _, tmpl := range t.Templates() {
-		log.Printf("Found: %s", tmpl.Name())
 		templateList[strings.Split(tmpl.Name(), ".")[0]] = tmpl.Name()
 	}
 	return templateList
@@ -130,7 +127,6 @@ func (tr *TemplateRenderer) TemplateSelector(r *http.Request, t *template.Templa
 		}
 	}
 
-	log.Printf("Chose template: %s", tr.DefaultTemplate)
 	return tr.DefaultTemplate, nil
 }
 
@@ -169,7 +165,6 @@ func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, distroVars m
 	headers := make(map[string]string)
 	headers["Content-type"] = e.ContentType
 	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DistroVars: distroVars, DataSources: dataSources}
-	log.Println(tr)
 	h, err := templatehandler.NewTemplateHandler(filepath.Join(basepath, e.TemplatePath), headers, tr)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -107,7 +106,6 @@ func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *Distro
 		if err != nil {
 			return &DistroTestResult{Failed: true, Output: fmt.Sprintf("unable to create mock for data source call: %v", err)}
 		}
-		log.Printf("Generated Mock: request - %v , response - %v", mock.Request(), mock.Response())
 		gock.Register(mock)
 	}
 
