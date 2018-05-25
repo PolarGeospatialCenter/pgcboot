@@ -29,11 +29,12 @@ type Endpoint struct {
 }
 
 // Call the Endpoint with the provided query string and requestBody (if applicable)
-func (e *Endpoint) Call(query, requestBody string) (*APIResponse, error) {
+func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
 	u, err := url.Parse(e.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
+	u.Path = u.Path + subPath
 	u.RawQuery = query
 	var body io.Reader
 	switch e.Method {
@@ -117,11 +118,11 @@ func (e *Endpoint) makeRequest(r *http.Request) (*http.Response, error) {
 type EndpointMap map[string]*Endpoint
 
 // Call the endpoint from the map with the provided arguments
-func (m EndpointMap) Call(endpoint, query, requestBody string) (*APIResponse, error) {
+func (m EndpointMap) Call(endpoint, subPath, query, requestBody string) (*APIResponse, error) {
 	e, ok := m[endpoint]
 	if !ok {
 		return nil, fmt.Errorf("endpoint not found: %s", endpoint)
 	}
 
-	return e.Call(query, requestBody)
+	return e.Call(subPath, query, requestBody)
 }

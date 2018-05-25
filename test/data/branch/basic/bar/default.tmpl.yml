@@ -1,5 +1,5 @@
 ---
-{{ $node := api "node" .RawQuery "" -}}
+{{ $node := api "node" "" .RawQuery "" -}}
 hostname: {{ $node.Data.Hostname }}
 inventory_id: {{ $node.Data.InventoryID }}
 kubernetes_version: {{ (index .DistroVars "kube_version") }}

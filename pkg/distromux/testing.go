@@ -36,6 +36,8 @@ func (m *MockDataSourceCall) mock(endpoints api.EndpointMap) (gock.Mock, error) 
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse datasource url %s: %v", m.DataSource, err)
 	}
+	u.Path = u.Path + m.Request.Path
+	u.RawQuery = m.Request.Query
 	req := gock.NewRequest().SetURL(u).BodyString(m.Request.Body)
 	req.Method = m.Request.Method
 	res := gock.NewResponse().Status(m.Response.Status).BodyString(m.Response.Body)
@@ -49,8 +51,13 @@ type MockHTTPRequest struct {
 	Method string `mapstructure:"method"`
 }
 
-func (r *MockHTTPRequest) BuildRequest() (*http.Request, error) {
-	return http.NewRequest(r.Method, "http://local"+r.Path+"?"+r.Query, bytes.NewBufferString(r.Body))
+func (r *MockHTTPRequest) BuildRequest(baseUrl *url.URL) (*http.Request, error) {
+	uString := fmt.Sprintf("%s://%s%s%s?%s", baseUrl.Scheme, baseUrl.Hostname(), baseUrl.EscapedPath(), r.Path, r.Query)
+	u, err := url.Parse(uString)
+	if err != nil {
+		return nil, err
+	}
+	return http.NewRequest(r.Method, u.String(), bytes.NewBufferString(r.Body))
 }
 
 type MockHTTPResponse struct {
@@ -91,7 +98,8 @@ func LoadTestCases(testsPath string) (map[string]*DistroTestCase, error) {
 
 func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *DistroTestResult {
 	// Build request
-	req, err := c.InputRequest.BuildRequest()
+	u, _ := url.Parse("http://local")
+	req, err := c.InputRequest.BuildRequest(u)
 	if err != nil {
 		return &DistroTestResult{Failed: true, Output: fmt.Sprintf("unable to create mock request: %v", err)}
 	}

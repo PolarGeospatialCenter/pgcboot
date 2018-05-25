@@ -81,7 +81,35 @@ func TestAPICall(t *testing.T) {
 		Reply(200).
 		JSON(map[string]string{"foo": "bar"})
 
-	data, err := e.Call("", "")
+	data, err := e.Call("", "", "")
+	if err != nil {
+		t.Errorf("API call failed: %v", err)
+	}
+
+	if data == nil {
+		t.Errorf("no data returned from API call")
+	}
+
+	fooval, ok := data.Data["foo"]
+	if !ok {
+		t.Errorf("no value for key foo")
+	}
+
+	if fooval.(string) != "bar" {
+		t.Errorf("wrong value returned for foo: %v", fooval)
+	}
+}
+
+func TestAPICallPathParams(t *testing.T) {
+	defer gock.Off() // Flush pending mocks after test execution
+
+	e := &Endpoint{URL: "https://api.local/v1/foo", Method: http.MethodGet}
+	gock.New("https://api.local/v1").
+		Get("/foo/bar").
+		Reply(200).
+		JSON(map[string]string{"foo": "bar"})
+
+	data, err := e.Call("/bar", "", "")
 	if err != nil {
 		t.Errorf("API call failed: %v", err)
 	}
@@ -109,7 +137,7 @@ func TestAPIMapCall(t *testing.T) {
 		Reply(200).
 		JSON(map[string]string{"foo": "bar"})
 
-	data, err := e.Call("test", "", "")
+	data, err := e.Call("test", "", "", "")
 	if err != nil {
 		t.Errorf("API call failed: %v", err)
 	}
