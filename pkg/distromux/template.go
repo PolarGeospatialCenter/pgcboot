@@ -1,7 +1,6 @@
 package distromux
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,7 +16,7 @@ import (
 // TemplateData is the struct that will be passed into the template at render time
 type TemplateData struct {
 	BaseURL       string
-	DistroVars    map[string]interface{}
+	DistroVars    DistroVars
 	RequestParams map[string]interface{}
 	RawQuery      string
 }
@@ -26,7 +25,6 @@ type TemplateData struct {
 type TemplateRenderer struct {
 	DefaultTemplate  string
 	FileNameTemplate string
-	DistroVars       map[string]interface{}
 	DataSources      api.EndpointMap
 }
 
@@ -55,6 +53,11 @@ func (tr *TemplateRenderer) getBaseURL(r *http.Request) (string, error) {
 // getNode gets the node associated with this request.
 func (tr *TemplateRenderer) getTemplateData(r *http.Request) (*TemplateData, error) {
 
+	distroVars, ok := DistroVarsFromContext(r.Context())
+	if !ok {
+		return nil, fmt.Errorf("unable to read distro vars from context")
+	}
+
 	query, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		return nil, err
@@ -67,7 +70,7 @@ func (tr *TemplateRenderer) getTemplateData(r *http.Request) (*TemplateData, err
 
 	templateData := &TemplateData{
 		RawQuery:   r.URL.RawQuery,
-		DistroVars: tr.DistroVars,
+		DistroVars: distroVars,
 		BaseURL:    baseURL,
 	}
 	requestParams := make(map[string]interface{})
@@ -123,11 +126,11 @@ type TemplateEndpoint struct {
 }
 
 // CreateHandler returns a handler for the endpoint described by this configuration
-func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, distroVars map[string]interface{}, dataSources api.EndpointMap) (http.Handler, error) {
+func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, dataSources api.EndpointMap) (http.Handler, error) {
 	var h http.Handler
 	headers := make(map[string]string)
 	headers["Content-type"] = e.ContentType
-	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DistroVars: distroVars, DataSources: dataSources}
+	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DataSources: dataSources}
 	h, err := templatehandler.NewTemplateHandler(filepath.Join(basepath, e.TemplatePath), headers, tr)
 	if err != nil {
 		return nil, err

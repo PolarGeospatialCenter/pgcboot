@@ -16,15 +16,19 @@ func TestTemplateData(t *testing.T) {
 		t.Fatalf("Unable to create request: %v", err)
 	}
 
-	testVars := make(map[string]interface{})
+	testVars := DistroVars{}
 	testVars["kube_version"] = "1.9.0"
+	r = testVars.SetContextForRequest(r)
 
-	renderer := &TemplateRenderer{DistroVars: testVars}
+	renderer := &TemplateRenderer{}
 
 	rawData, err := renderer.GetData(r)
+	if err != nil {
+		t.Errorf("unable to get data from renderer: %v", err)
+	}
 	data, ok := rawData.(*TemplateData)
 	if !ok {
-		t.Errorf("got unexpected data type from renderer: %T", data)
+		t.Errorf("got unexpected data type from renderer: %T", rawData)
 	}
 
 	if data.DistroVars == nil || data.DistroVars["kube_version"] != "1.9.0" {

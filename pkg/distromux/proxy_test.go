@@ -22,7 +22,7 @@ func TestProxyHTTP(t *testing.T) {
 
 	testTarget := "https://api.local/v1/foo"
 	endpoint := &ProxyEndpoint{TargetURL: "https://api.local/v1/"}
-	h, err := endpoint.CreateHandler("", "/local/", nil, nil)
+	h, err := endpoint.CreateHandler("", "/local/", nil)
 	if err != nil {
 		t.Fatalf("Unable to create handler: %v", err)
 	}

@@ -71,9 +71,10 @@ type DistroTestResult struct {
 }
 
 type DistroTestCase struct {
-	InputRequest   MockHTTPRequest      `mapstructure:"request"`
-	MockedData     []MockDataSourceCall `mapstructure:"mocked_data"`
-	ExpectedOutput MockHTTPResponse     `mapstructure:"expected"`
+	InputRequest     MockHTTPRequest      `mapstructure:"request"`
+	MockedData       []MockDataSourceCall `mapstructure:"mocked_data"`
+	ExpectedOutput   MockHTTPResponse     `mapstructure:"expected"`
+	MockedDistroVars DistroVars           `mapstructure:"vars"`
 }
 
 func LoadTestCases(testsPath string) (map[string]*DistroTestCase, error) {
@@ -116,6 +117,9 @@ func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *Distro
 		}
 		gock.Register(mock)
 	}
+
+	// mock distrovars
+	req = c.MockedDistroVars.SetContextForRequest(req)
 
 	// render response
 	response := httptest.NewRecorder()

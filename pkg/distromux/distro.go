@@ -2,6 +2,7 @@ package distromux
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -11,17 +12,28 @@ import (
 	"github.com/spf13/viper"
 )
 
+type DistroVars map[string]interface{}
+
+func (v DistroVars) Vars(_ *http.Request) DistroVars {
+	log.Printf("Getting distrovars: %v", v)
+	return v
+}
+
+func (v DistroVars) SetContextForRequest(r *http.Request) *http.Request {
+	return r.WithContext(NewDistroVarsContext(r.Context(), v))
+}
+
 // Endpoint describes an interface that configuration structs should implement.
 type Endpoint interface {
-	CreateHandler(string, string, map[string]interface{}, api.EndpointMap) (http.Handler, error)
+	CreateHandler(string, string, api.EndpointMap) (http.Handler, error)
 }
 
 // DistroConfig descibes the configuration of an instance of DistroMux
 type DistroConfig struct {
-	Endpoints   EndpointConfig         `mapstructure:"endpoints"`
-	DataSources api.EndpointMap        `mapstructure:"datasources"`
-	Test        DistroTestSuite        `mapstructure:"test"`
-	DistroVars  map[string]interface{} `mapstructure:"vars"`
+	Endpoints   EndpointConfig  `mapstructure:"endpoints"`
+	DataSources api.EndpointMap `mapstructure:"datasources"`
+	Test        DistroTestSuite `mapstructure:"test"`
+	DistroVars  DistroVars      `mapstructure:"vars"`
 }
 
 type EndpointConfig struct {
@@ -72,14 +84,14 @@ func (d *DistroMux) config() (*DistroConfig, error) {
 	return &config, err
 }
 
-func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, distroVars map[string]interface{}, dataSources api.EndpointMap) error {
+func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, dataSources api.EndpointMap) error {
 	route := d.Router.PathPrefix(path)
 	tmpl, err := route.GetPathTemplate()
 	if err != nil {
 		return err
 	}
 
-	h, err := endpoint.CreateHandler(d.basePath, tmpl, distroVars, dataSources)
+	h, err := endpoint.CreateHandler(d.basePath, tmpl, dataSources)
 	if err != nil {
 		return err
 	}
@@ -100,7 +112,7 @@ func (d *DistroMux) load() error {
 	// add each endpoint found in the config to the mux
 	for p, endpoint := range config.Endpoints.Template {
 		cleanPath := path.Clean("/" + p)
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
+		err = d.addEndpoint(cleanPath, endpoint, config.DataSources)
 		if err != nil {
 			return fmt.Errorf("unable to load template endpoint %s: %v", p, err)
 		}
@@ -109,7 +121,7 @@ func (d *DistroMux) load() error {
 	// add each endpoint found in the config to the mux
 	for p, endpoint := range config.Endpoints.Static {
 		cleanPath := path.Clean("/"+p) + "/"
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
+		err = d.addEndpoint(cleanPath, endpoint, config.DataSources)
 		if err != nil {
 			return fmt.Errorf("unable to load static endpoint %s: %v", p, err)
 		}
@@ -117,7 +129,7 @@ func (d *DistroMux) load() error {
 
 	for p, endpoint := range config.Endpoints.Proxy {
 		cleanPath := path.Clean("/"+p) + "/"
-		err = d.addEndpoint(cleanPath, endpoint, config.DistroVars, config.DataSources)
+		err = d.addEndpoint(cleanPath, endpoint, config.DataSources)
 		if err != nil {
 			return fmt.Errorf("unable to load proxy endpoint %s: %v", p, err)
 		}
@@ -145,4 +157,11 @@ func (d *DistroMux) Test() (map[string]*DistroTestResult, error) {
 	}
 
 	return testResults, nil
+}
+
+func (d *DistroMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if _, ok := DistroVarsFromContext(r.Context()); !ok {
+		r = r.WithContext(NewDistroVarsContext(r.Context(), d.cfg.DistroVars))
+	}
+	d.Router.ServeHTTP(w, r)
 }

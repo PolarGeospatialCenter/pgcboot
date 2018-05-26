@@ -14,7 +14,7 @@ type ProxyEndpoint struct {
 }
 
 // CreateHandler returns a httputil.ReverseProxy handler
-func (e *ProxyEndpoint) CreateHandler(_ string, pathPrefix string, _ map[string]interface{}, _ api.EndpointMap) (http.Handler, error) {
+func (e *ProxyEndpoint) CreateHandler(_ string, pathPrefix string, _ api.EndpointMap) (http.Handler, error) {
 	u, err := url.Parse(e.TargetURL)
 	if err != nil {
 		return nil, err
