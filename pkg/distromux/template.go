@@ -85,48 +85,11 @@ func (tr *TemplateRenderer) getTemplateData(r *http.Request) (*TemplateData, err
 	return templateData, nil
 }
 
-func templateNames(t *template.Template) map[string]string {
-	templateList := make(map[string]string)
-	for _, tmpl := range t.Templates() {
-		templateList[strings.Split(tmpl.Name(), ".")[0]] = tmpl.Name()
-	}
-	return templateList
-}
-
 // TemplateSelector chooses the appropriate template to use for handling the request.
 // Search order:
 // 1. node.Role match
 // 2. DefaultTemplate
 func (tr *TemplateRenderer) TemplateSelector(r *http.Request, t *template.Template) (string, error) {
-	data, err := tr.getTemplateData(r)
-	if err != nil {
-		switch err.(type) {
-		case templatehandler.ErrNotFound:
-			// Specified node not found, return default template
-			return tr.DefaultTemplate, nil
-		default:
-			return "", fmt.Errorf("unexpected error getting template data in template selector: %v", err)
-		}
-	}
-
-	templateMap := templateNames(t)
-	nameTemplate, err := template.New("nametemplate").Parse(tr.FileNameTemplate)
-	if err != nil {
-		return "", fmt.Errorf("unable to parse template file selection template string: %s", err)
-	}
-	name := bytes.NewBufferString("")
-	err = nameTemplate.Execute(name, data)
-	if err != nil {
-		return "", fmt.Errorf("unable to render template file selection template string: %s", err)
-	}
-
-	if name.String() != "" {
-		templateName, ok := templateMap[name.String()]
-		if ok {
-			return templateName, nil
-		}
-	}
-
 	return tr.DefaultTemplate, nil
 }
 
