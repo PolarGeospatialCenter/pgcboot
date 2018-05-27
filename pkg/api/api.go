@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -34,7 +35,7 @@ func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
-	u.Path = u.Path + subPath
+	u.Path = path.Join(u.Path, subPath)
 	u.RawQuery = query
 	var body io.Reader
 	switch e.Method {
