@@ -24,3 +24,10 @@ func TestDistroVarsContext(t *testing.T) {
 		}
 	}
 }
+
+func TestDistroVarsFromEmptyContext(t *testing.T) {
+	_, ok := DistroVarsFromContext(context.Background())
+	if ok {
+		t.Errorf("background context improperly returned distrovars")
+	}
+}

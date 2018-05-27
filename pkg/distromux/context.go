@@ -14,5 +14,8 @@ func NewDistroVarsContext(parentCtx context.Context, vars DistroVars) context.Co
 
 func DistroVarsFromContext(ctx context.Context) (DistroVars, bool) {
 	vars, ok := ctx.Value(distroVarsContextKey).(*DistroVars)
+	if !ok {
+		return DistroVars{}, false
+	}
 	return *vars, ok
 }
