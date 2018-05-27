@@ -178,3 +178,47 @@ func TestMockAPICallWithPath(t *testing.T) {
 		t.Errorf("Wrong result returned from mock.")
 	}
 }
+
+func TestMockAPICallPOSTWithPath(t *testing.T) {
+	apiCall := &MockDataSourceCall{
+		DataSource: "foo",
+		Request:    MockHTTPRequest{Path: "/pgc-0030", Body: "{}"},
+		Response:   MockHTTPResponse{Status: 200, Body: "{\"InventoryID\": \"pgc-0030\"}\n"},
+	}
+	endpoints := api.EndpointMap{
+		"foo": &api.Endpoint{URL: "http://local/v1/foo", Method: "POST"},
+	}
+
+	mock, err := apiCall.mock(endpoints)
+	if err != nil {
+		t.Errorf("unable to create mock: %v", err)
+	}
+
+	gock.DisableNetworking()
+	defer gock.EnableNetworking()
+	defer gock.Off()
+
+	gock.Register(mock)
+	httpClient := http.DefaultClient
+	gock.InterceptClient(httpClient)
+	gock.Intercept()
+
+	req, _ := http.NewRequest("POST", "http://localhost/v1/foo/pgc-0030", bytes.NewBufferString("{}"))
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		t.Errorf("unable to make request against mocked endpoint: %v", err)
+	}
+
+	if resp.StatusCode != apiCall.Response.Status {
+		t.Errorf("wrong status code returned.  Expected %d, Got %d", apiCall.Response.Status, resp.StatusCode)
+	}
+
+	resultBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf("unable to read response body: %v", err)
+	}
+
+	if string(resultBody) != "{\"InventoryID\": \"pgc-0030\"}\n" {
+		t.Errorf("Wrong result returned from mock.")
+	}
+}
