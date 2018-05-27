@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/viper"
 	gock "gopkg.in/h2non/gock.v1"
 )
@@ -134,9 +135,15 @@ func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *Distro
 	}
 	matchingBody = (strings.TrimSpace(string(resultBody)) == strings.TrimSpace(c.ExpectedOutput.Body))
 	result.Failed = (response.Result().StatusCode != c.ExpectedOutput.Status) || !matchingBody
+	if result.Failed {
+		result.Output = fmt.Sprintf("Expected status: %d - got: %d\n", c.ExpectedOutput.Status, response.Result().StatusCode)
+	}
 	if !matchingBody {
-		result.Output = fmt.Sprintf("Expected: status: %d\n%s\n", c.ExpectedOutput.Status, c.ExpectedOutput.Body) +
-			fmt.Sprintf("Got:      status: %d\n%s\n", response.Result().StatusCode, string(resultBody)) +
+		dmp := diffmatchpatch.New()
+
+		diffs := dmp.DiffMain(c.ExpectedOutput.Body, string(resultBody), false)
+
+		result.Output += fmt.Sprintf("Body Diff:\n%s", dmp.DiffPrettyText(diffs)) +
 			fmt.Sprintf("Raw Request: %v\n", req) +
 			fmt.Sprintf("Raw Response: %v", response.Result())
 	}
