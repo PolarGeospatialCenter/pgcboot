@@ -135,8 +135,9 @@ func (c *DistroTestCase) Test(mux *DistroMux, endpoints api.EndpointMap) *Distro
 	}
 	matchingBody = (strings.TrimSpace(string(resultBody)) == strings.TrimSpace(c.ExpectedOutput.Body))
 	result.Failed = (response.Result().StatusCode != c.ExpectedOutput.Status) || !matchingBody
+	result.Output = fmt.Sprintf("Expected length: %d - got: %d bytes\n", len(c.ExpectedOutput.Body), len(resultBody))
 	if result.Failed {
-		result.Output = fmt.Sprintf("Expected status: %d - got: %d\n", c.ExpectedOutput.Status, response.Result().StatusCode)
+		result.Output += fmt.Sprintf("Expected status: %d - got: %d\n", c.ExpectedOutput.Status, response.Result().StatusCode)
 	}
 	if !matchingBody {
 		dmp := diffmatchpatch.New()
