@@ -23,6 +23,19 @@ func (v DistroVars) SetContextForRequest(r *http.Request) *http.Request {
 	return r.WithContext(NewDistroVarsContext(r.Context(), v))
 }
 
+func DistroVarsMiddleware(r *mux.Router, vars DistroVars) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if _, ok := DistroVarsFromContext(req.Context()); !ok {
+				req = req.WithContext(NewDistroVarsContext(req.Context(), vars))
+				log.Printf("Added distrovars to context: %v", vars)
+			}
+
+			next.ServeHTTP(w, req)
+		})
+	}
+}
+
 // Endpoint describes an interface that configuration structs should implement.
 type Endpoint interface {
 	CreateHandler(string, string, api.EndpointMap) (http.Handler, error)
@@ -109,6 +122,8 @@ func (d *DistroMux) load() error {
 		w.Write([]byte("active"))
 	})
 
+	d.Router.Use(DistroVarsMiddleware(d.Router, d.cfg.DistroVars))
+
 	// add each endpoint found in the config to the mux
 	for p, endpoint := range config.Endpoints.Template {
 		cleanPath := path.Clean("/" + p)
@@ -157,11 +172,4 @@ func (d *DistroMux) Test() (map[string]*DistroTestResult, error) {
 	}
 
 	return testResults, nil
-}
-
-func (d *DistroMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if _, ok := DistroVarsFromContext(r.Context()); !ok {
-		r = r.WithContext(NewDistroVarsContext(r.Context(), d.cfg.DistroVars))
-	}
-	d.Router.ServeHTTP(w, r)
 }
