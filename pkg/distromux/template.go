@@ -17,7 +17,7 @@ import (
 type TemplateData struct {
 	BaseURL       string
 	DistroVars    DistroVars
-	RequestParams map[string]interface{}
+	RequestParams map[string]string
 	RawQuery      string
 }
 
@@ -73,14 +73,14 @@ func (tr *TemplateRenderer) getTemplateData(r *http.Request) (*TemplateData, err
 		DistroVars: distroVars,
 		BaseURL:    baseURL,
 	}
-	requestParams := make(map[string]interface{})
+	requestParams := make(map[string]string)
 	for key, value := range query {
 		switch len(value) {
 		case 1:
 			requestParams[key] = value[0]
 		case 0:
 		default:
-			requestParams[key] = value
+			requestParams[key] = strings.Join(value, ",")
 		}
 	}
 	templateData.RequestParams = requestParams
