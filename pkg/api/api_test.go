@@ -90,7 +90,7 @@ func TestAPICall(t *testing.T) {
 		t.Errorf("no data returned from API call")
 	}
 
-	fooval, ok := data.Data["foo"]
+	fooval, ok := data.Data.(map[string]interface{})["foo"]
 	if !ok {
 		t.Errorf("no value for key foo")
 	}
@@ -118,7 +118,7 @@ func TestAPICallPathParams(t *testing.T) {
 		t.Errorf("no data returned from API call")
 	}
 
-	fooval, ok := data.Data["foo"]
+	fooval, ok := data.Data.(map[string]interface{})["foo"]
 	if !ok {
 		t.Errorf("no value for key foo")
 	}
@@ -146,7 +146,7 @@ func TestAPIMapCall(t *testing.T) {
 		t.Errorf("no data returned from API call")
 	}
 
-	fooval, ok := data.Data["foo"]
+	fooval, ok := data.Data.(map[string]interface{})["foo"]
 	if !ok {
 		t.Errorf("no value for key foo")
 	}

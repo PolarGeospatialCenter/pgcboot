@@ -18,7 +18,7 @@ import (
 // APIResponse is a data structure encapsulating the return from an api endpoint
 type APIResponse struct {
 	Status int
-	Data   map[string]interface{}
+	Data   interface{}
 }
 
 // Endpoint is a single API endpoint/resource
@@ -57,13 +57,13 @@ func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error
 	apiResponse := &APIResponse{Status: response.StatusCode, Data: make(map[string]interface{})}
 	rawBodyData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		apiResponse.Data["error"] = "unable to read api response body"
+		apiResponse.Data.(map[string]interface{})["error"] = "unable to read api response body"
 		return apiResponse, fmt.Errorf("unable to read response body: %v", err)
 	}
 
 	err = json.Unmarshal(rawBodyData, &(apiResponse.Data))
 	if err != nil {
-		apiResponse.Data["error"] = "unable to unmarshal response body"
+		apiResponse.Data.(map[string]interface{})["error"] = "unable to unmarshal response body"
 		return apiResponse, fmt.Errorf("unable to unmarshal response body: %v -- request '%s' -- raw body '%s'", err, u.String(), string(rawBodyData))
 	}
 	return apiResponse, err
