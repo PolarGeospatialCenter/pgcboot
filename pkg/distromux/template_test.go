@@ -76,3 +76,16 @@ func TestTemplateAPICall(t *testing.T) {
 	}
 
 }
+
+func TestTemplateJoinFunction(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .list "," }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	tmpl.Execute(wr, map[string]interface{}{"list": []string{"a", "b", "c"}})
+	if wr.String() != "a,b,c" {
+		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+}

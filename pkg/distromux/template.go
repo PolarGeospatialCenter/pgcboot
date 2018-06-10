@@ -111,7 +111,8 @@ func (tr *TemplateRenderer) GetData(r *http.Request) (interface{}, error) {
 
 func (tr *TemplateRenderer) TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"api": tr.DataSources.Call,
+		"api":  tr.DataSources.Call,
+		"join": strings.Join,
 	}
 }
 
