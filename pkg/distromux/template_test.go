@@ -3,6 +3,7 @@ package distromux
 import (
 	"bytes"
 	"net/http"
+	"strings"
 	"testing"
 	"text/template"
 
@@ -77,15 +78,66 @@ func TestTemplateAPICall(t *testing.T) {
 
 }
 
-func TestTemplateJoinFunction(t *testing.T) {
+func TestTemplateJoinFunctionStringSlice(t *testing.T) {
 	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
-	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .list "," }}`)
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .slice "," }}`)
 	if err != nil {
 		t.Errorf("Unable to parse template for testing: %v", err)
 	}
 	wr := bytes.NewBufferString("")
-	tmpl.Execute(wr, map[string]interface{}{"list": []string{"a", "b", "c"}})
+	err = tmpl.Execute(wr, map[string]interface{}{"slice": []string{"a", "b", "c"}})
+	if err != nil {
+		t.Errorf("Error while rendering template: %v", err)
+	}
+
 	if wr.String() != "a,b,c" {
 		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+}
+
+func TestTemplateJoinFunctionInterfaceSlice(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .slice "," }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, map[string]interface{}{"slice": []interface{}{1, "b", "c"}})
+	if err != nil {
+		t.Errorf("Error while rendering template: %v", err)
+	}
+
+	if wr.String() != "1,b,c" {
+		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+}
+
+func TestTemplateJoinFunctionMap(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .map "," }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, map[string]interface{}{"map": map[string]string{"foo": "a", "bar": "b", "baz": "c"}})
+	if err != nil {
+		t.Errorf("Error while rendering template: %v", err)
+	}
+
+	if strings.Count(wr.String(), "a") != 1 || strings.Count(wr.String(), "b") != 1 || strings.Count(wr.String(), "c") != 1 || strings.Count(wr.String(), ",") != 2 {
+		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+}
+
+func TestTemplateJoinFunctionBadType(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ join .bad "," }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, map[string]interface{}{"bad": "foo"})
+	if err == nil {
+		t.Errorf("Expected error rendering template, got none")
 	}
 }

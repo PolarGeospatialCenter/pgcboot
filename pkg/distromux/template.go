@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -112,8 +114,48 @@ func (tr *TemplateRenderer) GetData(r *http.Request) (interface{}, error) {
 func (tr *TemplateRenderer) TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
 		"api":  tr.DataSources.Call,
-		"join": strings.Join,
+		"join": TemplateJoinWrapper,
 	}
+}
+
+func convertInterfaceToString(item interface{}) (string, error) {
+	switch item.(type) {
+	case string:
+		return item.(string), nil
+	case int:
+		return strconv.Itoa(item.(int)), nil
+	default:
+		return "", fmt.Errorf("Join item could not be converted from %T to string: %v", item, item)
+	}
+}
+
+func TemplateJoinWrapper(data interface{}, sep string) (string, error) {
+	var stringValues []string
+	var getItem func(reflect.Value, int) reflect.Value
+	s := reflect.ValueOf(data)
+	switch reflect.TypeOf(data).Kind() {
+	case reflect.Map:
+		keys := s.MapKeys()
+		getItem = func(value reflect.Value, idx int) reflect.Value {
+			return value.MapIndex(keys[idx])
+		}
+	case reflect.Slice:
+		getItem = func(value reflect.Value, idx int) reflect.Value {
+			return value.Index(idx)
+		}
+	default:
+		return "", fmt.Errorf("Join unsupported for type: %T", data)
+	}
+	var err error
+	stringValues = make([]string, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		item := getItem(s, i).Interface()
+		stringValues[i], err = convertInterfaceToString(item)
+		if err != nil {
+			break
+		}
+	}
+	return strings.Join(stringValues, sep), err
 }
 
 // TemplateEndpoint describes the configuration of an endpoint based on golang
