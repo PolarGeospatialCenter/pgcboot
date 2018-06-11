@@ -77,7 +77,10 @@ func (s *DistroServer) Rebuild() error {
 	for _, path := range versionFolders {
 		srcpath := filepath.Join(s.repoPath, path)
 		prefix := "/" + path + "/"
-		distromux.NewDistroMux(srcpath, r.PathPrefix(prefix).Subrouter())
+		_, err := distromux.NewDistroMux(srcpath, r.PathPrefix(prefix).Subrouter())
+		if err != nil {
+			return fmt.Errorf("unable to load distro version at %s: %v", srcpath, err)
+		}
 	}
 
 	for p, h := range s.handlers {

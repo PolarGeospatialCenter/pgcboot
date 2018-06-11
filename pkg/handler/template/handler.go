@@ -109,7 +109,7 @@ func RenderJsonError(w http.ResponseWriter, status int, err error) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(status)
 	err_body := make(map[string]string)
-	err_body["msg"] = fmt.Sprintf("%s", err)
+	err_body["msg"] = fmt.Sprintf("%v", err)
 	enc := json.NewEncoder(w)
 	enc.Encode(&err_body)
 }
@@ -126,7 +126,7 @@ func (t *TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err != nil {
 		RenderJsonError(w, http.StatusInternalServerError, fmt.Errorf("Internal server error. Please consult the server logs."))
-		log.Printf("An error ocurred while handling %s: %s", r, err)
+		log.Printf("An error ocurred while handling %v: %s", r, err)
 		return
 	}
 	for header, value := range t.Headers {

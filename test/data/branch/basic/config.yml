@@ -14,5 +14,16 @@ endpoints:
   proxy:
     google:
       targeturl: https://www.google.com/
+datasources:
+  node:
+    url: http://localhost:54321/v1/node
+    method: GET
+    auth: iam
+  sample:
+    url: http://localhost:54321/v1/sample
+    method: GET
+    auth: iam
+test:
+  folder: tests
 vars:
   kube_version: "1.9.0"

@@ -105,7 +105,7 @@ func TestRenderJsonError(t *testing.T) {
 		t.Errorf("Error incorrectly claims not to be a teapot.")
 	}
 	if w.Result().Header.Get("Content-Type") != "application/json" {
-		t.Errorf("Wrong content type returned", w.Result().Header.Get("Content-Type"))
+		t.Errorf("Wrong content type returned: %v", w.Result().Header.Get("Content-Type"))
 	}
 
 	dec := json.NewDecoder(w.Result().Body)
@@ -131,7 +131,7 @@ func TestServeHTTPOK(t *testing.T) {
 	h.ServeHTTP(w, r)
 
 	if w.Result().StatusCode != http.StatusOK {
-		t.Errorf("Incorrect status code set: %s", w.Result().StatusCode)
+		t.Errorf("Incorrect status code set: %d", w.Result().StatusCode)
 	}
 
 	if w.Result().Header.Get("Content-Type") != "application/json" {
@@ -157,7 +157,7 @@ func TestServeHTTPNotFound(t *testing.T) {
 	h.ServeHTTP(w, r)
 
 	if w.Result().StatusCode != http.StatusNotFound {
-		t.Errorf("Incorrect status code set: %s", w.Result().StatusCode)
+		t.Errorf("Incorrect status code set: %d", w.Result().StatusCode)
 	}
 
 	if w.Result().Header.Get("Content-Type") != "application/json" {
@@ -187,7 +187,7 @@ func TestServeHTTPServerError(t *testing.T) {
 	h.ServeHTTP(w, r)
 
 	if w.Result().StatusCode != http.StatusInternalServerError {
-		t.Errorf("Incorrect status code set: %s", w.Result().StatusCode)
+		t.Errorf("Incorrect status code set: %d", w.Result().StatusCode)
 	}
 
 	if w.Result().Header.Get("Content-Type") != "application/json" {

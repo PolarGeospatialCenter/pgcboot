@@ -1,10 +1,7 @@
 package distromux
 
 import (
-	"io/ioutil"
 	"log"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -12,7 +9,10 @@ import (
 
 func TestDistroMux(t *testing.T) {
 	r := mux.NewRouter()
-	m := NewDistroMux("../../test/data/branch/basic", r)
+	m, err := NewDistroMux("../../test/data/branch/basic", r)
+	if err != nil {
+		t.Errorf("Error creating distromux: %v", err)
+	}
 
 	// generate list of routes
 	routes := make(map[string]*mux.Route)
@@ -40,16 +40,30 @@ func TestDistroMux(t *testing.T) {
 	if _, ok := routes["/google/"]; !ok {
 		t.Fatalf("google proxy endpoint not created")
 	}
+}
 
-	response := httptest.NewRecorder()
-	request, err := http.NewRequest("GET", "/google/", nil)
+func TestDistroMuxTest(t *testing.T) {
+	r := mux.NewRouter()
+	m, err := NewDistroMux("../../test/data/branch/basic", r)
 	if err != nil {
-		t.Fatalf("Unable to create request.")
+		t.Errorf("Error creating distromux: %v", err)
 	}
-	r.ServeHTTP(response, request)
-	if response.Result().StatusCode != http.StatusOK {
-		t.Errorf("Proxy endpoint returned wrong status code: %d", response.Result().StatusCode)
-		body, _ := ioutil.ReadAll(response.Result().Body)
-		t.Logf("Body of bad response: %s", body)
+
+	results, err := m.Test()
+	if err != nil {
+		t.Errorf("distromux tests errored: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("wrong number of test results returned: got %d, expected 1", len(results))
+	}
+
+	for p, r := range results {
+		if r.Failed {
+			t.Errorf("Test %s failed.", p)
+			t.Error(r.Output)
+		} else {
+			t.Logf("Test %s Succeeded", p)
+		}
 	}
 }
