@@ -164,7 +164,6 @@ type TemplateEndpoint struct {
 	TemplatePath     string   `mapstructure:"template_path"`
 	ContentType      string   `mapstructure:"content_type"`
 	DefaultTemplate  string   `mapstructure:"default_template"`
-	FileNameTemplate string   `mapstructure:"filename_template"`
 	PostRender       []string `mapstructure:"post_render"`
 }
 
