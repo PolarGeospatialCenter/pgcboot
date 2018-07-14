@@ -161,10 +161,11 @@ func TemplateJoinWrapper(data interface{}, sep string) (string, error) {
 // TemplateEndpoint describes the configuration of an endpoint based on golang
 // templates.
 type TemplateEndpoint struct {
-	TemplatePath     string   `mapstructure:"template_path"`
-	ContentType      string   `mapstructure:"content_type"`
-	DefaultTemplate  string   `mapstructure:"default_template"`
-	PostRender       []string `mapstructure:"post_render"`
+	TemplatePath    string   `mapstructure:"template_path"`
+	RawContentType  string   `mapstructure:"raw_content_type"`
+	ContentType     string   `mapstructure:"content_type"`
+	DefaultTemplate string   `mapstructure:"default_template"`
+	PostRender      []string `mapstructure:"post_render"`
 }
 
 // CreateHandler returns a handler for the endpoint described by this configuration
@@ -172,6 +173,9 @@ func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, dataSources 
 	var h http.Handler
 	headers := make(map[string]string)
 	headers["Content-type"] = e.ContentType
+	if e.RawContentType != "" {
+		headers["Content-type"] = e.RawContentType
+	}
 	tr := &TemplateRenderer{DefaultTemplate: e.DefaultTemplate, DataSources: dataSources}
 	h, err := templatehandler.NewTemplateHandler(filepath.Join(basepath, e.TemplatePath), headers, tr)
 	if err != nil {
