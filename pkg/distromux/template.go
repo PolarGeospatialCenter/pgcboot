@@ -161,11 +161,12 @@ func TemplateJoinWrapper(data interface{}, sep string) (string, error) {
 // TemplateEndpoint describes the configuration of an endpoint based on golang
 // templates.
 type TemplateEndpoint struct {
-	TemplatePath    string   `mapstructure:"template_path"`
-	RawContentType  string   `mapstructure:"raw_content_type"`
-	ContentType     string   `mapstructure:"content_type"`
-	DefaultTemplate string   `mapstructure:"default_template"`
-	PostRender      []string `mapstructure:"post_render"`
+	TemplatePath     string   `mapstructure:"template_path"`
+	RawContentType   string   `mapstructure:"raw_content_type"`
+	ContentType      string   `mapstructure:"content_type"`
+	DefaultTemplate  string   `mapstructure:"default_template"`
+	PostRender       []string `mapstructure:"post_render"`
+	RedirectInsecure bool     `mapstructure:"redirect_insecure"`
 }
 
 // CreateHandler returns a handler for the endpoint described by this configuration
@@ -185,6 +186,10 @@ func (e *TemplateEndpoint) CreateHandler(basepath string, _ string, dataSources 
 	for _, post := range e.PostRender {
 		cmd := strings.Split(post, " ")
 		h = &pipe.PipeHandler{ResponsePipe: &pipe.PipeExec{Command: cmd, ContentType: e.ContentType}, Handler: h}
+	}
+
+	if e.RedirectInsecure {
+		h = RedirectInsecure(h)
 	}
 
 	return h, nil
