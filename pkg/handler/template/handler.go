@@ -66,6 +66,9 @@ func NewTemplateHandler(path string, headers map[string]string, rm RenderManager
 func (th *TemplateHandler) ReloadTemplates() error {
 	templateFiles := make([]string, 0)
 	err := filepath.Walk(th.templatePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !info.IsDir() {
 			templateFiles = append(templateFiles, path)
 		}

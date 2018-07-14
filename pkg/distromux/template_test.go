@@ -2,7 +2,9 @@ package distromux
 
 import (
 	"bytes"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"text/template"
@@ -76,6 +78,72 @@ func TestTemplateAPICall(t *testing.T) {
 		t.Errorf("unexpected result: expected 'bar' got '%s'", output.String())
 	}
 
+}
+
+func TestTemplateRawContentType(t *testing.T) {
+	gock.DisableNetworking()
+	defer gock.EnableNetworking()
+	defer gock.Off() // Flush pending mocks after test execution
+
+	e := api.EndpointMap{}
+	ep := &TemplateEndpoint{TemplatePath: "foo", RawContentType: "text/yaml", ContentType: "application/json", DefaultTemplate: "default.tmpl.yml"}
+	handler, err := ep.CreateHandler("../../test/data/branch/basic", "", e)
+	if err != nil {
+		t.Fatalf("unable to load endpoint for testing: %v", err)
+	}
+
+	response := httptest.NewRecorder()
+	request, err := http.NewRequest(http.MethodGet, "https://test.local/branch/dev/foo?raw", nil)
+	if err != nil {
+		t.Errorf("unable to create test request: %v", err)
+	}
+
+	ctx := NewDistroVarsContext(request.Context(), DistroVars{})
+	handler.ServeHTTP(response, request.WithContext(ctx))
+
+	if response.Result().StatusCode != http.StatusOK {
+		t.Errorf("Got non-OK status: %d", response.Result().StatusCode)
+		body, _ := ioutil.ReadAll(response.Result().Body)
+		t.Errorf("Result Body: %s", body)
+	}
+
+	contentType := response.Header().Get("Content-type")
+	if contentType != "text/yaml" {
+		t.Errorf("Got wrong raw content-type: %s", contentType)
+	}
+}
+
+func TestTemplatePostRenderContentType(t *testing.T) {
+	gock.DisableNetworking()
+	defer gock.EnableNetworking()
+	defer gock.Off() // Flush pending mocks after test execution
+
+	e := api.EndpointMap{}
+	ep := &TemplateEndpoint{TemplatePath: "foo", RawContentType: "text/yaml", ContentType: "application/json", DefaultTemplate: "default.tmpl.yml", PostRender: []string{"cat"}}
+	handler, err := ep.CreateHandler("../../test/data/branch/basic", "", e)
+	if err != nil {
+		t.Fatalf("unable to load endpoint for testing: %v", err)
+	}
+
+	response := httptest.NewRecorder()
+	request, err := http.NewRequest(http.MethodGet, "https://test.local/branch/dev/foo", nil)
+	if err != nil {
+		t.Errorf("unable to create test request: %v", err)
+	}
+
+	ctx := NewDistroVarsContext(request.Context(), DistroVars{})
+	handler.ServeHTTP(response, request.WithContext(ctx))
+
+	if response.Result().StatusCode != http.StatusOK {
+		t.Errorf("Got non-OK status: %d", response.Result().StatusCode)
+		body, _ := ioutil.ReadAll(response.Result().Body)
+		t.Errorf("Result Body: %s", body)
+	}
+
+	contentType := response.Header().Get("Content-type")
+	if contentType != "application/json" {
+		t.Errorf("Got wrong raw content-type: %s", contentType)
+	}
 }
 
 func TestTemplateJoinFunctionStringSlice(t *testing.T) {
