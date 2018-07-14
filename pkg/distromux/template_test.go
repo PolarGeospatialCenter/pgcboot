@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"text/template"
@@ -207,5 +208,40 @@ func TestTemplateJoinFunctionBadType(t *testing.T) {
 	err = tmpl.Execute(wr, map[string]interface{}{"bad": "foo"})
 	if err == nil {
 		t.Errorf("Expected error rendering template, got none")
+	}
+}
+
+func TestGetTemplateBaseURLXForwardedProto(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	testUrl, _ := url.Parse("http://test.local/foo/bar")
+	headers := http.Header{}
+	headers.Add("X-Forwarded-Proto", "https")
+	baseUrl, err := renderer.getBaseURL(&http.Request{
+		Method: http.MethodGet,
+		URL:    testUrl,
+		Host:   "test.local",
+		Header: headers,
+	})
+	if err != nil {
+		t.Errorf("Error getting base url: %v", baseUrl)
+	}
+	if baseUrl != "https://test.local/foo" {
+		t.Errorf("Wrong base url returned: %s", baseUrl)
+	}
+}
+
+func TestGetTemplateBaseURL(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	testUrl, _ := url.Parse("http://test.local/foo/bar")
+	baseUrl, err := renderer.getBaseURL(&http.Request{
+		Method: http.MethodGet,
+		URL:    testUrl,
+		Host:   "test.local",
+	})
+	if err != nil {
+		t.Errorf("Error getting base url: %v", baseUrl)
+	}
+	if baseUrl != "http://test.local/foo" {
+		t.Errorf("Wrong base url returned: %s", baseUrl)
 	}
 }

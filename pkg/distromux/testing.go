@@ -46,10 +46,11 @@ func (m *MockDataSourceCall) mock(endpoints api.EndpointMap) (gock.Mock, error) 
 }
 
 type MockHTTPRequest struct {
-	Path   string `mapstructure:"path"`
-	Query  string `mapstructure:"query"`
-	Body   string `mapstructure:"body"`
-	Method string `mapstructure:"method"`
+	Path    string                 `mapstructure:"path"`
+	Query   string                 `mapstructure:"query"`
+	Body    string                 `mapstructure:"body"`
+	Method  string                 `mapstructure:"method"`
+	Headers map[string]interface{} `mapstructure:"headers"`
 }
 
 func (r *MockHTTPRequest) BuildRequest(baseUrl *url.URL) (*http.Request, error) {
@@ -58,7 +59,25 @@ func (r *MockHTTPRequest) BuildRequest(baseUrl *url.URL) (*http.Request, error) 
 	if err != nil {
 		return nil, err
 	}
-	return http.NewRequest(r.Method, u.String(), bytes.NewBufferString(r.Body))
+	headers := http.Header{}
+	for field, value := range r.Headers {
+		switch value.(type) {
+		case string:
+			headers.Add(field, value.(string))
+		case []string:
+			for _, v := range value.([]string) {
+				headers.Add(field, v)
+			}
+		default:
+			return nil, fmt.Errorf("Unsupported header type %T", value)
+		}
+	}
+	req, err := http.NewRequest(r.Method, u.String(), bytes.NewBufferString(r.Body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header = headers
+	return req, nil
 }
 
 type MockHTTPResponse struct {

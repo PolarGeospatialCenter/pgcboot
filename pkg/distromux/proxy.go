@@ -10,7 +10,8 @@ import (
 
 // ProxyEndpoint acts as a reverse proxy to the given TargetURL
 type ProxyEndpoint struct {
-	TargetURL string
+	TargetURL        string
+	RedirectInsecure bool `mapstructure:"redirect_insecure"`
 }
 
 // CreateHandler returns a httputil.ReverseProxy handler
@@ -27,5 +28,11 @@ func (e *ProxyEndpoint) CreateHandler(_ string, pathPrefix string, _ api.Endpoin
 			r.Host = u.Host
 			r.RequestURI = ""
 		}}
-	return http.StripPrefix(pathPrefix, proxy), nil
+
+	h := http.StripPrefix(pathPrefix, proxy)
+	if e.RedirectInsecure {
+		h = RedirectInsecure(h)
+	}
+
+	return h, nil
 }
