@@ -19,6 +19,8 @@ request:
   path: /ignition
   query: id=pgc-0030
   method: GET
+  headers:
+    X-Forwarded-Proto: https
 mocked_data:
   - datasource: node
     request:
@@ -34,7 +36,7 @@ expected:
   status: 200
 `
 	expectedTestCase := DistroTestCase{
-		InputRequest: MockHTTPRequest{Path: "/ignition", Query: "id=pgc-0030", Method: "GET"},
+		InputRequest: MockHTTPRequest{Path: "/ignition", Query: "id=pgc-0030", Method: "GET", Headers: map[string]interface{}{"x-forwarded-proto": "https"}},
 		MockedData: []MockDataSourceCall{
 			MockDataSourceCall{
 				DataSource: "node",
