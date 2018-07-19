@@ -10,7 +10,7 @@ endpoints:
       content_type: application/x-yaml
       network: "provisioning"
       post_render:
-         - "cat"
+        - "/bin/cat"
   proxy:
     google:
       targeturl: https://www.google.com/
