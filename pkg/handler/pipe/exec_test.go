@@ -7,7 +7,7 @@ import (
 )
 
 func TestPipeExec(t *testing.T) {
-	p := &PipeExec{Command: []string{"cat"}, ContentType: "application/text"}
+	p := &PipeExec{Command: []string{"/bin/cat"}, ContentType: "application/text"}
 	rec := httptest.NewRecorder()
 	rec.Write([]byte("Hello world!"))
 	rec.Header().Set("Content-type", "application/json")
