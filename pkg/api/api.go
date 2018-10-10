@@ -56,7 +56,7 @@ func (e *Endpoint) GetUrl(subPath, query string) (*url.URL, error) {
 func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
 	u, err := e.GetUrl(subPath, query)
 	if err != nil {
-		return nil, fmt.Errorf("unable to build URL: %s", e.URL)
+		return nil, fmt.Errorf("unable to build URL (%s): %v", e.URL, err)
 	}
 	var body io.Reader
 	switch e.Method {
