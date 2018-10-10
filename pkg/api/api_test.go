@@ -189,7 +189,7 @@ func TestEnvUrlTemplate(t *testing.T) {
 	e := &Endpoint{URL: "{{ env \"API_BASE\" }}/foo", Method: http.MethodGet}
 	apiBase := "https://api.local/v1/"
 	os.Setenv("API_BASE", apiBase)
-	u, err := e.getUrl("", "")
+	u, err := e.GetUrl("", "")
 	if err != nil {
 		t.Fatalf("Error getting url: %v", err)
 	}

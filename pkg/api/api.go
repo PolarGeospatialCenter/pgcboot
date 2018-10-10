@@ -31,7 +31,7 @@ type Endpoint struct {
 	iamSession *session.Session
 }
 
-func (e *Endpoint) getUrl(subPath, query string) (*url.URL, error) {
+func (e *Endpoint) GetUrl(subPath, query string) (*url.URL, error) {
 	tmpl, err := template.New("url").Funcs(map[string]interface{}{"env": os.Getenv}).Parse(e.URL)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing url as template: %v", err)
@@ -54,7 +54,7 @@ func (e *Endpoint) getUrl(subPath, query string) (*url.URL, error) {
 
 // Call the Endpoint with the provided query string and requestBody (if applicable)
 func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
-	u, err := e.getUrl(subPath, query)
+	u, err := e.GetUrl(subPath, query)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build URL: %s", e.URL)
 	}
