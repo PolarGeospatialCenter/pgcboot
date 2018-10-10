@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,7 +32,18 @@ type Endpoint struct {
 }
 
 func (e *Endpoint) getUrl(subPath, query string) (*url.URL, error) {
-	u, err := url.Parse(e.URL)
+	tmpl, err := template.New("url").Funcs(map[string]interface{}{"env": os.Getenv}).Parse(e.URL)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url as template: %v", err)
+	}
+
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering url as template: %v", err)
+	}
+
+	u, err := url.Parse(wr.String())
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
