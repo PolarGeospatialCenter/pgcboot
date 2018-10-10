@@ -29,14 +29,22 @@ type Endpoint struct {
 	iamSession *session.Session
 }
 
-// Call the Endpoint with the provided query string and requestBody (if applicable)
-func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
+func (e *Endpoint) getUrl(subPath, query string) (*url.URL, error) {
 	u, err := url.Parse(e.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
 	u.Path = path.Join(u.Path, subPath)
 	u.RawQuery = query
+	return u, nil
+}
+
+// Call the Endpoint with the provided query string and requestBody (if applicable)
+func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
+	u, err := e.getUrl(subPath, query)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build URL: %s", e.URL)
+	}
 	var body io.Reader
 	switch e.Method {
 	case http.MethodGet:
