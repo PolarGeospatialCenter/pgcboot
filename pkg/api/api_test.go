@@ -184,3 +184,17 @@ func TestIAMAuth(t *testing.T) {
 		t.Errorf("expected %s", expectedAuthz)
 	}
 }
+
+func TestEnvUrlTemplate(t *testing.T) {
+	e := &Endpoint{URL: "{{ env \"API_BASE\" }}/foo", Method: http.MethodGet}
+	apiBase := "https://api.local/v1/"
+	os.Setenv("API_BASE", apiBase)
+	u, err := e.getUrl("", "")
+	if err != nil {
+		t.Fatalf("Error getting url: %v", err)
+	}
+
+	if u.String() != "https://api.local/v1/foo" {
+		t.Errorf("Built wrong url: got '%s' expected '%s'", u.String(), "https://api.local/v1/foo")
+	}
+}
