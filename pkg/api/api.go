@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -29,14 +31,33 @@ type Endpoint struct {
 	iamSession *session.Session
 }
 
-// Call the Endpoint with the provided query string and requestBody (if applicable)
-func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
-	u, err := url.Parse(e.URL)
+func (e *Endpoint) GetUrl(subPath, query string) (*url.URL, error) {
+	tmpl, err := template.New("url").Funcs(map[string]interface{}{"env": os.Getenv}).Parse(e.URL)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url as template: %v", err)
+	}
+
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering url as template: %v", err)
+	}
+
+	u, err := url.Parse(wr.String())
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse URL: %s", e.URL)
 	}
 	u.Path = path.Join(u.Path, subPath)
 	u.RawQuery = query
+	return u, nil
+}
+
+// Call the Endpoint with the provided query string and requestBody (if applicable)
+func (e *Endpoint) Call(subPath, query, requestBody string) (*APIResponse, error) {
+	u, err := e.GetUrl(subPath, query)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build URL (%s): %v", e.URL, err)
+	}
 	var body io.Reader
 	switch e.Method {
 	case http.MethodGet:

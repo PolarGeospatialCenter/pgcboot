@@ -33,7 +33,7 @@ func (m *MockDataSourceCall) mock(endpoints api.EndpointMap) (gock.Mock, error) 
 	if !ok {
 		return nil, fmt.Errorf("invalid datasource specified for mock: %s", m.DataSource)
 	}
-	u, err := url.Parse(source.URL)
+	u, err := source.GetUrl("", "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse datasource url %s: %v", m.DataSource, err)
 	}
