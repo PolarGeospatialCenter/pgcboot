@@ -12,6 +12,8 @@ import (
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/distromux"
 	"github.com/gorilla/mux"
+
+	"github.com/honeycombio/beeline-go/wrappers/hnygorilla"
 )
 
 type DistroServer struct {
@@ -67,6 +69,7 @@ func (s *DistroServer) getVersionFolders() ([]string, error) {
 
 func (s *DistroServer) Rebuild() error {
 	r := mux.NewRouter()
+	r.Use(hnygorilla.Middleware)
 	// Walk repoPath, adding a DistroMux for each directory Found
 	rebuildTime := time.Now().String()
 	versionFolders, err := s.getVersionFolders()

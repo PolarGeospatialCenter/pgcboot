@@ -14,6 +14,7 @@ import (
 	"github.com/PolarGeospatialCenter/awstools/pkg/config"
 	treebuilder "github.com/PolarGeospatialCenter/pgcboot/pkg/gittree"
 	"github.com/gorilla/mux"
+	"github.com/honeycombio/beeline-go"
 	"gopkg.in/go-playground/webhooks.v3"
 	"gopkg.in/go-playground/webhooks.v3/github"
 )
@@ -27,6 +28,18 @@ func main() {
 	cfg.SetDefault("tempdir", "")
 	// load config
 	cfg.ReadInConfig()
+
+	// Set up honeycomb
+	if cfg.GetString("honeycomb.write_key") != "" {
+		beeline.Init(beeline.Config{
+			WriteKey: cfg.GetString("honeycomb.write_key"),
+			Dataset:  cfg.GetString("honeycomb.dataset"),
+		})
+	} else {
+		beeline.Init(beeline.Config{
+			STDOUT: true,
+		})
+	}
 
 	// Create temporary path for repository
 	repoPath, err := ioutil.TempDir(cfg.GetString("tempdir"), "repository")
