@@ -3,6 +3,7 @@ package distromux
 import (
 	"bytes"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
+	"github.com/go-test/deep"
 	gock "gopkg.in/h2non/gock.v1"
 )
 
@@ -211,6 +213,77 @@ func TestTemplateJoinFunctionBadType(t *testing.T) {
 	}
 }
 
+func TestTemplateNetworkCidrContains(t *testing.T) {
+	cases := []struct {
+		name           string
+		cidr           string
+		ips            []string
+		expectedResult []string
+		expectedErr    error
+	}{
+		{
+			name:           "Success 10/8",
+			cidr:           "10.0.0.0/8",
+			ips:            []string{"10.0.0.1", "192.168.0.1", "2001:db8::1"},
+			expectedResult: []string{"10.0.0.1"},
+			expectedErr:    nil,
+		},
+		{
+			name:           "Success 2001:db8::/64",
+			cidr:           "2001:db8::/64",
+			ips:            []string{"10.0.0.1", "192.168.0.1", "2001:db8::1", "2001:db8:0:4::1"},
+			expectedResult: []string{"2001:db8::1"},
+			expectedErr:    nil,
+		},
+		{
+			name:           "Fail, bad cidr",
+			cidr:           "",
+			ips:            []string{"10.0.0.1", "192.168.0.1", "2001:db8::1", "2001:db8:0:4::1"},
+			expectedResult: []string{},
+			expectedErr:    &net.ParseError{Type: "CIDR address"},
+		},
+		{
+			name:           "Success, badly formatted IP",
+			cidr:           "2001:db8::/64",
+			ips:            []string{"10.0.0.1", "192.168.0.1", "asdf", "", "2001:db8::1", "2001:db8:0:4::1"},
+			expectedResult: []string{"2001:db8::1"},
+			expectedErr:    nil,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(st *testing.T) {
+			r, err := TemplateNetworkCidrContains(c.cidr, c.ips)
+			if diff := deep.Equal(r, c.expectedResult); len(diff) > 0 {
+				st.Error("Expected result mismatch:")
+				for _, l := range diff {
+					st.Error(l)
+				}
+			}
+
+			if err != c.expectedErr && err.Error() != c.expectedErr.Error() {
+				st.Errorf("Expected error '%v' got '%s'", c.expectedErr, err)
+			}
+		})
+	}
+}
+func TestTemplateCidrContains(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ $ips := applyCidrMask "2001:db8::/64" .ips }}{{ index $ips 0 }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, map[string]interface{}{"ips": []string{"10.0.0.1", "192.168.0.1", "asdf", "", "2001:db8:0:0::1", "2001:db8:0:4::1"}})
+	if err != nil {
+		t.Errorf("Error while rendering template: %v", err)
+	}
+
+	if wr.String() != "2001:db8::1" {
+		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+
+}
 func TestGetTemplateBaseURLXForwardedProto(t *testing.T) {
 	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
 	testUrl, _ := url.Parse("http://test.local/foo/bar")

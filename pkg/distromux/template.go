@@ -2,6 +2,7 @@ package distromux
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -12,7 +13,7 @@ import (
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/pipe"
-	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/template"
+	templatehandler "github.com/PolarGeospatialCenter/pgcboot/pkg/handler/template"
 )
 
 // TemplateData is the struct that will be passed into the template at render time
@@ -113,8 +114,9 @@ func (tr *TemplateRenderer) GetData(r *http.Request) (interface{}, error) {
 
 func (tr *TemplateRenderer) TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"api":  tr.DataSources.Call,
-		"join": TemplateJoinWrapper,
+		"api":           tr.DataSources.Call,
+		"join":          TemplateJoinWrapper,
+		"applyCidrMask": TemplateNetworkCidrContains,
 	}
 }
 
@@ -156,6 +158,22 @@ func TemplateJoinWrapper(data interface{}, sep string) (string, error) {
 		}
 	}
 	return strings.Join(stringValues, sep), err
+}
+
+func TemplateNetworkCidrContains(cidr string, ips []string) ([]string, error) {
+	_, n, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return []string{}, err
+	}
+
+	result := make([]string, 0, len(ips))
+	for _, ipString := range ips {
+		ip := net.ParseIP(ipString)
+		if ip != nil && n.Contains(ip) {
+			result = append(result, ip.String())
+		}
+	}
+	return result, nil
 }
 
 // TemplateEndpoint describes the configuration of an endpoint based on golang
