@@ -11,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
+
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/handler/pipe"
 	templatehandler "github.com/PolarGeospatialCenter/pgcboot/pkg/handler/template"
@@ -113,11 +115,11 @@ func (tr *TemplateRenderer) GetData(r *http.Request) (interface{}, error) {
 }
 
 func (tr *TemplateRenderer) TemplateFuncs() template.FuncMap {
-	return template.FuncMap{
-		"api":           tr.DataSources.Call,
-		"join":          TemplateJoinWrapper,
-		"applyCidrMask": TemplateNetworkCidrContains,
-	}
+	fm := sprig.TxtFuncMap()
+	fm["api"] = tr.DataSources.Call
+	fm["join"] = TemplateJoinWrapper
+	fm["applyCidrMask"] = TemplateNetworkCidrContains
+	return fm
 }
 
 func convertInterfaceToString(item interface{}) (string, error) {
