@@ -217,7 +217,7 @@ func TestTemplateNetworkCidrContains(t *testing.T) {
 	cases := []struct {
 		name           string
 		cidr           string
-		ips            []string
+		ips            interface{}
 		expectedResult []string
 		expectedErr    error
 	}{
@@ -246,6 +246,20 @@ func TestTemplateNetworkCidrContains(t *testing.T) {
 			name:           "Success, badly formatted IP",
 			cidr:           "2001:db8::/64",
 			ips:            []string{"10.0.0.1", "192.168.0.1", "asdf", "", "2001:db8::1", "2001:db8:0:4::1"},
+			expectedResult: []string{"2001:db8::1"},
+			expectedErr:    nil,
+		},
+		{
+			name:           "Success, cidr IP",
+			cidr:           "2001:db8::/64",
+			ips:            []string{"10.0.0.1", "192.168.0.1", "asdf", "", "2001:db8::1/64", "2001:db8:0:4::1"},
+			expectedResult: []string{"2001:db8::1"},
+			expectedErr:    nil,
+		},
+		{
+			name:           "Success, interface array",
+			cidr:           "2001:db8::/64",
+			ips:            []interface{}{"10.0.0.1", "192.168.0.1", "asdf", 6, "2001:db8::1", "2001:db8:0:4::1"},
 			expectedResult: []string{"2001:db8::1"},
 			expectedErr:    nil,
 		},

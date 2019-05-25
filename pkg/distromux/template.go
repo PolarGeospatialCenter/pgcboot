@@ -160,16 +160,38 @@ func TemplateJoinWrapper(data interface{}, sep string) (string, error) {
 	return strings.Join(stringValues, sep), err
 }
 
-func TemplateNetworkCidrContains(cidr string, ips []string) ([]string, error) {
+func TemplateNetworkCidrContains(cidr string, ips interface{}) ([]string, error) {
 	_, n, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return []string{}, err
 	}
 
-	result := make([]string, 0, len(ips))
-	for _, ipString := range ips {
-		ip := net.ParseIP(ipString)
-		if ip != nil && n.Contains(ip) {
+	ipStrings := make([]string, 0)
+	switch ipList := ips.(type) {
+	case []interface{}:
+		for _, ipCandidate := range ipList {
+			if ipString, ok := ipCandidate.(string); ok {
+				ipStrings = append(ipStrings, ipString)
+			}
+		}
+	case []string:
+		ipStrings = ipList
+	case string:
+		ipStrings = append(ipStrings, ipList)
+	}
+
+	result := make([]string, 0, len(ipStrings))
+
+	for _, ipString := range ipStrings {
+		ip, _, err := net.ParseCIDR(ipString)
+		if err != nil {
+			ip = net.ParseIP(ipString)
+			if ip == nil {
+				continue
+			}
+		}
+
+		if n.Contains(ip) {
 			result = append(result, ip.String())
 		}
 	}
