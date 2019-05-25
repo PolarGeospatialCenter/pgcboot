@@ -298,6 +298,24 @@ func TestTemplateCidrContains(t *testing.T) {
 	}
 
 }
+
+func TestSprigDict(t *testing.T) {
+	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
+	tmpl, err := template.New("templatebase").Funcs(renderer.TemplateFuncs()).Parse(`{{ $d := dict "foo" "fooval" "bar" "barval" }}{{ $d.foo }}`)
+	if err != nil {
+		t.Errorf("Unable to parse template for testing: %v", err)
+	}
+	wr := bytes.NewBufferString("")
+	err = tmpl.Execute(wr, "")
+	if err != nil {
+		t.Errorf("Error while rendering template: %v", err)
+	}
+
+	if wr.String() != "fooval" {
+		t.Errorf("Unexpected result returned from template renderer: '%s'", wr.String())
+	}
+
+}
 func TestGetTemplateBaseURLXForwardedProto(t *testing.T) {
 	renderer := &TemplateRenderer{DataSources: api.EndpointMap{}}
 	testUrl, _ := url.Parse("http://test.local/foo/bar")
