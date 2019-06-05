@@ -17,12 +17,13 @@ type PipeHandler struct {
 	Handler      http.Handler
 }
 
-func (h *PipeHandler) copyResponse(w http.ResponseWriter, r *http.Response) {
+func (h *PipeHandler) copyResponse(w http.ResponseWriter, r *http.Response) error {
 	for header := range map[string][]string(r.Header) {
 		w.Header().Set(header, r.Header.Get(header))
 	}
 	w.WriteHeader(r.StatusCode)
-	io.Copy(w, r.Body)
+	_, err := io.Copy(w, r.Body)
+	return err
 }
 
 func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,10 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	queryValues := r.URL.Query()
 
 	if _, ok := queryValues["raw"]; ok {
-		h.copyResponse(w, response)
+		err := h.copyResponse(w, response)
+		if err != nil {
+			log.Printf("error replaying raw response: %v", err)
+		}
 		return
 	}
 
@@ -45,5 +49,8 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	h.copyResponse(w, response)
+	err = h.copyResponse(w, response)
+	if err != nil {
+		log.Printf("error replaying transformed response: %v", err)
+	}
 }
