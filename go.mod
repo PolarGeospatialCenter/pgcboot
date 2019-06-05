@@ -8,10 +8,17 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.18.0+incompatible
 	github.com/PolarGeospatialCenter/awstools v0.0.0-20180520175615-dbe1840ac783
+	github.com/PolarGeospatialCenter/dockertest v0.0.0-20190402172603-7e70c31421a4 // indirect
+	github.com/PolarGeospatialCenter/inventory v0.3.0 // indirect
 	github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 // indirect
+	github.com/aws/aws-lambda-go v1.11.1 // indirect
 	github.com/aws/aws-sdk-go v1.13.52
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/azenk/iputils v0.0.0-20180901170612-d1883c0677d3 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emirpasic/gods v1.9.0 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
@@ -38,9 +45,11 @@ require (
 	github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20180317175531-9fc7bb800b55 // indirect
 	github.com/magiconair/properties v1.7.6 // indirect
+	github.com/manifoldco/promptui v0.3.2 // indirect
 	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180220230111-00c29f56e238 // indirect
 	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pelletier/go-buffruneio v0.2.0 // indirect
 	github.com/pelletier/go-toml v1.1.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
@@ -59,6 +68,7 @@ require (
 	gopkg.in/go-playground/webhooks.v3 v3.10.0
 	gopkg.in/h2non/gock.v1 v1.0.8
 	gopkg.in/ini.v1 v1.42.0 // indirect
+	gopkg.in/resty.v1 v1.12.0 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.1.1
 	gopkg.in/src-d/go-git-fixtures.v3 v3.5.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.2.1
