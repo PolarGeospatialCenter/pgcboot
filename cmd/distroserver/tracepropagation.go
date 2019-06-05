@@ -10,14 +10,16 @@ import (
 // or creates a new trace and adds the trace parameter to the query for propagation.
 func TracePropagationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-
-		ctx, t := trace.NewTrace(req.Context(), req.URL.Query().Get("trace"))
+		propagatedTrace := req.URL.Query().Get("trace")
+		ctx, t := trace.NewTrace(req.Context(), propagatedTrace)
 		req.WithContext(ctx)
-		span := t.GetRootSpan()
 
-		queryVals := req.URL.Query()
-		queryVals.Set("trace", span.SerializeHeaders())
-		req.URL.RawQuery = queryVals.Encode()
+		if propagatedTrace == "" {
+			span := t.GetRootSpan()
+			queryVals := req.URL.Query()
+			queryVals.Set("trace", span.SerializeHeaders())
+			req.URL.RawQuery = queryVals.Encode()
+		}
 
 		next.ServeHTTP(w, req)
 	})
