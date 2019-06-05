@@ -12,7 +12,8 @@ func TracePropagationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		propagatedTrace := req.URL.Query().Get("trace")
 		ctx, t := trace.NewTrace(req.Context(), propagatedTrace)
-		req.WithContext(ctx)
+		defer t.Send()
+		req = req.WithContext(ctx)
 
 		if propagatedTrace == "" {
 			span := t.GetRootSpan()
