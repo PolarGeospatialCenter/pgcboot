@@ -52,10 +52,15 @@ func (p *PipeExec) run(stdout io.Writer, stdin io.Reader) error {
 		stdinPipe.Close()
 	}()
 
+	done := make(chan struct{})
 	go func() {
 		io.Copy(stdout, stdoutPipe)
 		stdoutPipe.Close()
+		close(done)
 	}()
 
-	return cmd.Wait()
+	err = cmd.Wait()
+	<-done
+
+	return err
 }
