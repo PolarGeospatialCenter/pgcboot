@@ -35,6 +35,7 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if parentSpan != nil {
 		var ctx context.Context
 		ctx, span = parentSpan.CreateChild(r.Context())
+		defer span.Send()
 		r = r.WithContext(ctx)
 		span.AddField("name", "PipeHandler")
 	}
