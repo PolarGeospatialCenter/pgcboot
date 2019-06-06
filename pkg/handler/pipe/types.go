@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/honeycombio/beeline-go/trace"
 )
 
 type ResponsePipe interface {
@@ -27,12 +29,18 @@ func (h *PipeHandler) copyResponse(w http.ResponseWriter, r *http.Response) erro
 }
 
 func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	parentSpan := trace.GetSpanFromContext(r.Context())
+	var span *trace.Span
+	if parentSpan != nil {
+		ctx, span := parentSpan.CreateChild(r.Context())
+		r = r.WithContext(ctx)
+		span.AddField("name", "PipeHandler")
+	}
 	b := httptest.NewRecorder()
 
 	h.Handler.ServeHTTP(b, r)
 
 	response := b.Result()
-
 	queryValues := r.URL.Query()
 
 	if _, ok := queryValues["raw"]; ok {
@@ -49,6 +57,11 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	if span != nil {
+		span.AddField("response.transformed_response_length", response.ContentLength)
+	}
+
 	err = h.copyResponse(w, response)
 	if err != nil {
 		log.Printf("error replaying transformed response: %v", err)
