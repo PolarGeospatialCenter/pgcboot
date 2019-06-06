@@ -9,6 +9,7 @@ import (
 
 	"github.com/PolarGeospatialCenter/pgcboot/pkg/api"
 	"github.com/gorilla/mux"
+	"github.com/honeycombio/beeline-go/trace"
 	"github.com/spf13/viper"
 )
 
@@ -109,7 +110,18 @@ func (d *DistroMux) addEndpoint(path string, endpoint Endpoint, dataSources api.
 		return err
 	}
 
-	route.Handler(h)
+	tracingMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(wr http.ResponseWriter, r *http.Request) {
+			parentSpan := trace.GetSpanFromContext(r.Context())
+			if parentSpan != nil {
+				parentSpan.AddField("name", path)
+				parentSpan.AddField("base_path", d.basePath)
+			}
+			next.ServeHTTP(wr, r)
+		})
+
+	}
+	route.Handler(tracingMiddleware(h))
 	return nil
 }
 
