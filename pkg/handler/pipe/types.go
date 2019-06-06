@@ -20,13 +20,13 @@ type PipeHandler struct {
 	Handler      http.Handler
 }
 
-func (h *PipeHandler) copyResponse(w http.ResponseWriter, r *http.Response) error {
+func (h *PipeHandler) copyResponse(w http.ResponseWriter, r *http.Response) (int64, error) {
 	for header := range map[string][]string(r.Header) {
 		w.Header().Set(header, r.Header.Get(header))
 	}
 	w.WriteHeader(r.StatusCode)
-	_, err := io.Copy(w, r.Body)
-	return err
+	count, err := io.Copy(w, r.Body)
+	return count, err
 }
 
 func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	queryValues := r.URL.Query()
 
 	if _, ok := queryValues["raw"]; ok {
-		err := h.copyResponse(w, response)
+		_, err := h.copyResponse(w, response)
 		if err != nil {
 			log.Printf("error replaying raw response: %v", err)
 		}
@@ -60,12 +60,13 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if span != nil {
-		span.AddField("response.transformed_response_length", response.ContentLength)
-	}
-
-	err = h.copyResponse(w, response)
+	count, err := h.copyResponse(w, response)
 	if err != nil {
 		log.Printf("error replaying transformed response: %v", err)
 	}
+
+	if span != nil {
+		span.AddField("response.transformed_length", count)
+	}
+
 }
