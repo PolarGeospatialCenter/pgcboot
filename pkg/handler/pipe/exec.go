@@ -2,12 +2,15 @@ package pipe
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"strings"
+
+	"github.com/honeycombio/beeline-go/trace"
 )
 
 // PipeExec reads from stdin passing the data into stdin of the command.
@@ -18,10 +21,10 @@ type PipeExec struct {
 	ContentType string
 }
 
-func (p *PipeExec) Transform(r *http.Response) error {
+func (p *PipeExec) Transform(ctx context.Context, r *http.Response) error {
 	var out bytes.Buffer
 
-	err := p.run(&out, r.Body)
+	err := p.run(ctx, &out, r.Body)
 	if err != nil {
 		return fmt.Errorf("error running command '%s': %v", strings.Join(p.Command, " "), err)
 	}
@@ -30,7 +33,12 @@ func (p *PipeExec) Transform(r *http.Response) error {
 	return nil
 }
 
-func (p *PipeExec) run(stdout io.Writer, stdin io.Reader) error {
+func (p *PipeExec) run(ctx context.Context, stdout io.Writer, stdin io.Reader) error {
+	span := trace.GetSpanFromContext(ctx)
+	if span != nil {
+		span.AddField("command", p.Command)
+	}
+
 	cmd := exec.Command(p.Command[0], p.Command[1:]...)
 	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
@@ -48,13 +56,21 @@ func (p *PipeExec) run(stdout io.Writer, stdin io.Reader) error {
 	}
 
 	go func() {
-		io.Copy(stdinPipe, stdin)
+		copiedFromStdIn, err := io.Copy(stdinPipe, stdin)
+		if span != nil {
+			span.AddField("stdin.bytes_copied", copiedFromStdIn)
+			span.AddField("stdin.err", err)
+		}
 		stdinPipe.Close()
 	}()
 
 	done := make(chan struct{})
 	go func() {
-		io.Copy(stdout, stdoutPipe)
+		copiedFromStdOut, err := io.Copy(stdout, stdoutPipe)
+		if span != nil {
+			span.AddField("stdout.bytes_copied", copiedFromStdOut)
+			span.AddField("stdout.err", err)
+		}
 		stdoutPipe.Close()
 		close(done)
 	}()

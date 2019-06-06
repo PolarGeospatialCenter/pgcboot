@@ -2,6 +2,7 @@ package pipe
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -19,7 +20,7 @@ func (l *loopbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type testTransformer struct{}
 
-func (t *testTransformer) Transform(r *http.Response) error {
+func (t *testTransformer) Transform(_ context.Context, r *http.Response) error {
 	r.Header.Set("Content-type", "application/json")
 	currentBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 )
 
 type ResponsePipe interface {
-	Transform(*http.Response) error
+	Transform(context.Context, *http.Response) error
 }
 
 // PipeHandler passes the output of the wrapped Handler through the supplied ResponsePipe.
@@ -57,7 +57,7 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		span.AddField("response.raw_length", response.ContentLength)
 	}
 
-	err := h.ResponsePipe.Transform(response)
+	err := h.ResponsePipe.Transform(r.Context(), response)
 	if err != nil {
 		log.Printf("An error ocurred while transforming response: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

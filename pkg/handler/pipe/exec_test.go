@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ func TestPipeExec(t *testing.T) {
 	rec.Header().Set("Content-type", "application/json")
 
 	r := rec.Result()
-	err := p.Transform(r)
+	err := p.Transform(context.Background(), r)
 	if err != nil {
 		t.Fatalf("An error ocurred while transforming content: %s", err)
 	}
