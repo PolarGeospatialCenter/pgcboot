@@ -1,6 +1,7 @@
 package pipe
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -32,7 +33,8 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	parentSpan := trace.GetSpanFromContext(r.Context())
 	var span *trace.Span
 	if parentSpan != nil {
-		ctx, span := parentSpan.CreateChild(r.Context())
+		var ctx context.Context
+		ctx, span = parentSpan.CreateChild(r.Context())
 		r = r.WithContext(ctx)
 		span.AddField("name", "PipeHandler")
 	}
