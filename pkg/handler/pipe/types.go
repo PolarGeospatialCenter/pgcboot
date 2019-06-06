@@ -53,6 +53,10 @@ func (h *PipeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if span != nil {
+		span.AddField("response.raw_length", response.ContentLength)
+	}
+
 	err := h.ResponsePipe.Transform(response)
 	if err != nil {
 		log.Printf("An error ocurred while transforming response: %v", err)
