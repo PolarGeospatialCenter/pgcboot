@@ -75,8 +75,8 @@ func (p *PipeExec) run(ctx context.Context, stdout io.Writer, stdin io.Reader) e
 		close(done)
 	}()
 
-	err = cmd.Wait()
 	<-done
+	err = cmd.Wait()
 
 	return err
 }
